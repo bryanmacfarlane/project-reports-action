@@ -11,7 +11,7 @@ import {GeneratorConfiguration, ReportSnapshot, ReportConfig, ProjectsData, Proj
 export async function generate(token: string, configYaml: string): Promise<ReportSnapshot> {
     console.log("Generating reports");
 
-    let configPath = path.join(__dirname, configYaml);
+    let configPath = path.join(process.env["GITHUB_WORKSPACE"], configYaml);
     let config = <GeneratorConfiguration>yaml.load(fs.readFileSync(configPath, 'utf-8'))
 
     let snapshot = <ReportSnapshot>{};
