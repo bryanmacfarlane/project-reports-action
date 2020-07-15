@@ -5309,7 +5309,7 @@ let sanitize = __webpack_require__(834);
 function generate(token, configYaml) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log("Generating reports");
-        let configPath = path.join(__dirname, configYaml);
+        let configPath = path.join(process.env["GITHUB_WORKSPACE"], configYaml);
         let config = yaml.load(fs.readFileSync(configPath, 'utf-8'));
         let snapshot = {};
         snapshot.datetime = new Date();
@@ -5324,13 +5324,10 @@ function generate(token, configYaml) {
             report.details = {
                 time: util.getTimeForOffset(snapshot.datetime, report.timezoneOffset)
             };
-            console.log(report.details.time);
-            console.log(`Rendering ${report.name}`);
             report.name = mustache.render(report.name, {
                 config: config,
                 report: report
             });
-            console.log(report.name);
         }
         let outPath = yield writeSnapshot(snapshot);
         // hand that full data set to each report to render
