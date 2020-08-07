@@ -28,3 +28,5 @@ jobs:
     - run: npm run build
     - run: npm test
     - run: ./interactive.sh
+      env:
+        GHPAT: ${{secrets.GITHUB_TOKEN}}
