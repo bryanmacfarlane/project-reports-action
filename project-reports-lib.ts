@@ -102,10 +102,10 @@ export function readFieldFromBody(key: string, body: string): string {
 
     line = line.trim()
     const parts = line.split(':')
-    if (parts.length === 2 && fuzzyMatch(parts[0], key)) {
+    if (parts.length === 2 && wordsMatch(parts[0], key)) {
       val = parts[1].trim()
       break
-    } else if (line.toLowerCase() === key.toLowerCase()) {
+    } else if (wordsMatch(line, key)) {
       headerMatch = true
     }
   }
@@ -124,6 +124,7 @@ export function getLastCommentField(issue: ProjectIssue, field: string): string 
   }
 
   val = readFieldFromBody(field, issue.body)
+  console.log(`des: ${val}`)
   for (let i = issue.comments.length - 1; i >= 0; i--) {
     const comment = issue.comments[i]
     if (!comment) {
@@ -145,7 +146,7 @@ export function getLastCommentField(issue: ProjectIssue, field: string): string 
 export function getLastCommentDateField(issue: ProjectIssue, field: string): Date {
   let d: Date = null
   const val = getLastCommentField(issue, field)
-
+  console.log(`val: ${val}`)
   if (val) {
     d = new Date(val)
   }
@@ -155,6 +156,20 @@ export function getLastCommentDateField(issue: ProjectIssue, field: string): Dat
 
 export function sumCardProperty(cards: ProjectIssue[], prop: string): number {
   return cards.reduce((a, b) => a + (b[prop] || 0), 0)
+}
+
+export function wordsMatch(content: string, match: string): boolean {
+  let matchWords = match.match(/[a-zA-Z0-9]+/g)
+  let contentWords = content.match(/[a-zA-Z0-9]+/g)
+
+  if (!matchWords || !contentWords) {
+    return false
+  }
+
+  matchWords = matchWords.map(item => item.toLowerCase())
+  contentWords = contentWords.map(item => item.toLowerCase())
+
+  return matchWords.length === contentWords.length && matchWords.every((value, index) => value === contentWords[index])
 }
 
 export function fuzzyMatch(content: string, match: string): boolean {
@@ -194,6 +209,7 @@ export const ProjectStages = {
   Proposed: 'Proposed',
   Accepted: 'Accepted',
   InProgress: 'In-Progress',
+  Blocked: 'Blocked',
   Done: 'Done',
   Missing: 'Missing'
 }
@@ -203,8 +219,11 @@ export type ProjectStageIssues = {[key: string]: ProjectIssue[]}
 export function getProjectStageIssues(issues: ProjectIssue[]) {
   const projIssues = <ProjectStageIssues>{}
   for (const projIssue of issues) {
+    console.log(projIssue.html_url)
     const stage = projIssue['project_stage']
+    console.log(stage)
     if (!stage) {
+      console.log(`no stage: ${projIssue.html_url}`)
       // the engine will handle and add to an issues list
       continue
     }
@@ -311,9 +330,10 @@ const stageLevel = {
   None: 0,
   Proposed: 1,
   Accepted: 2,
-  'In-Progress': 3,
-  Done: 4,
-  Unmapped: 5
+  Blocked: 3,
+  'In-Progress': 4,
+  Done: 5,
+  Unmapped: 6
 }
 
 export class IssueList {
@@ -324,7 +344,14 @@ export class IssueList {
 
   // keep in order indexed by level above
   // TODO: unify both to avoid out of sync problems
-  stageAtNames = ['none', 'project_proposed_at', 'project_accepted_at', 'project_in_progress_at', 'project_done_at']
+  stageAtNames = [
+    'none',
+    'project_proposed_at',
+    'project_accepted_at',
+    'project_blocked_at',
+    'project_in_progress_at',
+    'project_done_at'
+  ]
 
   constructor(identifier: (item) => any) {
     this.seen = new Map()
@@ -367,8 +394,11 @@ export class IssueList {
   }
 
   public getItems(): ProjectIssue[] {
+    console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+    console.log('getItems ...')
     if (this.processed) {
-      return this.processed
+      // return clone(this.processed)
+      this.processed
     }
 
     // call process
@@ -377,6 +407,7 @@ export class IssueList {
     }
 
     this.processed = this.items
+    //return clone(this.processed)
     return this.processed
   }
 

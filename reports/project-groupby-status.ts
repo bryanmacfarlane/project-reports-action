@@ -48,6 +48,7 @@ export type GroupByData = {
 export interface StageBreakdown {
   proposed: ProjectIssue[]
   accepted: ProjectIssue[]
+  blocked: ProjectIssue[]
   inProgress: ProjectIssue[]
   inProgressLimits: LimitsData
   done: ProjectIssue[]
@@ -71,10 +72,21 @@ function getBreakdown(
   issues: ProjectIssue[],
   drillIn: (identifier: string, title: string, cards: ProjectIssue[]) => void
 ): GroupByData {
+  console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+  console.log(`Breakdown for ${name}`)
+  console.log(`issues: ${issues.length}`)
+  console.log()
+
   const groupByData: GroupByData = <GroupByData>{}
 
   const stageData: ProjectStageIssues = rptLib.getProjectStageIssues(issues)
+  for (const stage in stageData) {
+    console.log(`${stage}: ${stageData[stage].length}`)
+  }
 
+  //
+  // Breakdown by stages
+  //
   groupByData.stages = <StageBreakdown>{}
   groupByData.stages.proposed = stageData[ProjectStages.Proposed] || []
   drillIn(drillInName(name, 'proposed'), `${name} proposed`, groupByData.stages.proposed)
@@ -82,8 +94,13 @@ function getBreakdown(
   groupByData.stages.accepted = stageData[ProjectStages.Accepted] || []
   drillIn(drillInName(name, 'accepted'), `${name} accepted`, groupByData.stages.accepted)
 
+  console.log(stageData[ProjectStages.InProgress])
   groupByData.stages.inProgress = stageData[ProjectStages.InProgress] || []
   drillIn(drillInName(name, 'in-progress'), `${name} in progress`, groupByData.stages.inProgress)
+  console.log(`inProgress: ${groupByData.stages.inProgress.length}`)
+
+  groupByData.stages.blocked = stageData[ProjectStages.Blocked] || []
+  drillIn(drillInName(name, 'blocked'), `${name} blocked`, groupByData.stages.blocked)
 
   // get the limit from config by fuzzy matching the group label with the setting
   let limit = Number.MAX_VALUE
@@ -95,25 +112,33 @@ function getBreakdown(
   }
 
   groupByData.stages.inProgressLimits = {
-    limit: limit,
+    limit: limit || Number.MAX_VALUE,
     flag: groupByData.stages.inProgress.length > limit
   }
 
   groupByData.stages.done = stageData[ProjectStages.Done] || []
   drillIn(drillInName(name, 'done'), `${name} done`, groupByData.stages.done)
 
+  for (const stage in groupByData.stages) {
+    console.log(`Stage: ${stage}, count: ${groupByData.stages[stage].length}`)
+  }
+
+  //
+  // Flagging issues for discussion
+  //
   groupByData.flagged = <Flagged>{}
+  const notDone = issues.filter(issue => issue.project_stage !== ProjectStages.Done)
 
   const statusRegEx = new RegExp(config['status-label-match'])
   groupByData.flagged.red =
-    issues.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'red') || []
+    notDone.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'red') || []
   drillIn(drillInName(name, 'red'), `${name} with a status red`, groupByData.flagged.red)
 
   groupByData.flagged.yellow =
-    issues.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'yellow') || []
+    notDone.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'yellow') || []
   drillIn(drillInName(name, 'yellow'), `${name} with a status yellow`, groupByData.flagged.yellow)
 
-  groupByData.flagged.inProgressDuration = issues.filter(issue => {
+  groupByData.flagged.inProgressDuration = notDone.filter(issue => {
     if (issue.project_stage === ProjectStages.InProgress) {
       const days = moment().diff(moment(issue.project_in_progress_at), 'days')
       console.log(`In progress, ${days}: ${issue.title}`)
@@ -139,9 +164,13 @@ function getBreakdown(
   // we only care about in progress being past the target date
   groupByData.flagged.pastTarget = clone(groupByData.stages.inProgress).filter(issue => {
     const d = rptLib.getLastCommentDateField(issue, config['target-date-comment-field'])
-    return d && !isNaN(d.valueOf()) && moment(d).isBefore(now)
+    return d && !isNaN(d.valueOf()) && moment(d).add(1, 'days').isBefore(now)
   })
   drillIn(drillInName(name, 'past-target'), `${name} past the target date`, groupByData.flagged.pastTarget)
+
+  for (const flagged in groupByData.flagged) {
+    console.log(`Flag: ${flagged}, count: ${groupByData.flagged[flagged].length}`)
+  }
 
   return groupByData
 }
@@ -157,14 +186,15 @@ export function process(
   groupData.durationDays = config['flag-in-progress-days']
   groupData.groups = {}
 
-  const issues = issueList.getItems()
+  const issues: ProjectIssue[] = issueList.getItems()
+  console.log(`issues: ${issues.length}`)
 
   const label = config['report-on-label']
   if (!label) {
     throw new Error('report-on-label is required')
   }
   console.log(`Getting issues for ${label}`)
-  const issuesForLabel =
+  const issuesForLabel: ProjectIssue[] =
     label === '*' ? clone(issues) : clone(rptLib.filterByLabel(issues, label.trim().toLowerCase()) as ProjectIssue[])
   console.log(`Retrieved ${issuesForLabel.length} issues`)
 
@@ -174,12 +204,13 @@ export function process(
     throw new Error('group-by-label-prefix is required')
   }
 
-  const pattern = `(?<=${prefix}).*`
+  const pattern = `(?<=^${prefix}).*`
   const regex = new RegExp(pattern)
   const groupByLabels: string[] = []
   for (const issue of issuesForLabel) {
     const labelValue = (rptLib.getStringFromLabel(issue, regex) || '').trim()
     if (labelValue && groupByLabels.indexOf(labelValue) === -1) {
+      console.log(`'${labelValue}' from ${issue.html_url}`)
       groupByLabels.push(labelValue)
     }
   }

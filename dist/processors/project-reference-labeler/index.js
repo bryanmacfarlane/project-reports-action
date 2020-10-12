@@ -1,4 +1,4 @@
-module.exports =
+require('./sourcemap-register.js');module.exports =
 /******/ (function(modules, runtime) { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	// The module cache
@@ -100,18 +100,29 @@ function getDefaultConfiguration() {
         'column-label-prefix': '> ',
         'linked-label-prefix': '>> ',
         'label-color': 'FFFFFF',
+        'skip-columns': ['Done', 'Complete'],
         // need to actually set to true, otherwise it's just a preview of what it would write
         'write-labels': false
     };
 }
 exports.getDefaultConfiguration = getDefaultConfiguration;
-// const noiseWords = ['the', 'in', 'and', 'of']
+const noiseWords = ['the', 'in', 'and', 'of', '&'];
+// needs to be less than 50 chars, so we filter down to words, no noise words and then start removing words at end
 function cleanLabelName(prefix, title) {
     title = title.replace(/\([^()]*\)/g, '').replace(/ *\[[^\]]*]/, '');
-    const words = title.match(/[a-zA-Z0-9&]+/g);
-    //  words = words.map(item => item.toLowerCase())
-    //words = words.filter(word => noiseWords.indexOf(word) < 0)
-    return `${prefix.trim()} ${words.join(' ')}`;
+    let words = title.match(/[a-zA-Z0-9&]+/g);
+    words = words.filter(word => noiseWords.indexOf(word.toLowerCase()) < 0);
+    let label = `${prefix.trim()} Invalid`;
+    while (words.length > 0) {
+        label = `${prefix.trim()} ${words.join(' ')}`;
+        if (label.length <= 50) {
+            break;
+        }
+        else {
+            words.pop();
+        }
+    }
+    return label;
 }
 // ensures that only a label with this prefix exists
 function ensureOnlyLabel(github, issue, labelName, prefix, config) {
@@ -125,20 +136,23 @@ function ensureOnlyLabel(github, issue, labelName, prefix, config) {
             // add, but first ...
             // remove any other labels with that prefix
             for (const label of issue.labels) {
-                if (label.name.trim().startsWith(prefix)) {
-                    console.log(`Removing label: ${label.name}`);
-                    if (write) {
-                        yield github.removeIssueLabel(issue.html_url, label.name);
-                    }
+                if (label.name.trim().startsWith(prefix) && label.name.trim().toLowerCase() !== labelName.trim().toLowerCase()) {
+                    console.log(`Label to potentially be removed: ${label.name}`);
+                    addToBeDeleted(issue.html_url, label.name);
+                    // if (write) {
+                    //   await github.removeIssueLabel(issue.html_url, label.name)
+                    // }
                 }
             }
             console.log(`Adding label: ${labelName}`);
+            ensureNotToBeDeleted(issue.html_url, labelName);
             if (write) {
                 yield github.ensureIssueHasLabel(issue.html_url, labelName, config['label-color']);
             }
         }
         else {
             console.log(`Label already exists: ${labelName}`);
+            ensureNotToBeDeleted(issue.html_url, labelName);
         }
     });
 }
@@ -148,6 +162,11 @@ function process(target, config, data, github) {
     return __awaiter(this, void 0, void 0, function* () {
         for (const issue of data.getItems()) {
             console.log();
+            if (issue.project_column && config['skip-columns'] && config['skip-columns'].indexOf(issue.project_column) >= 0) {
+                console.log(`Skipping issue in column ${issue.project_column}`);
+                console.log();
+                continue;
+            }
             console.log(`initiative : ${issue.project_column}`);
             console.log(`epic       : ${issue.title}`);
             console.log('creates    :');
@@ -183,9 +202,38 @@ function process(target, config, data, github) {
                 console.log();
             }
         }
+        console.log('Cleaning up labels');
+        console.log(JSON.stringify(toDelete, null, 2));
+        for (const issueUrl in toDelete) {
+            console.log(`Cleaning up labels for ${issueUrl}`);
+            for (const label of toDelete[issueUrl]) {
+                console.log(`Removing label: ${label}`);
+                if (config['write-labels']) {
+                    yield github.removeIssueLabel(issueUrl, label);
+                }
+            }
+        }
     });
 }
 exports.process = process;
+let toDelete = {};
+function addToBeDeleted(url, label) {
+    if (!toDelete[url]) {
+        toDelete[url] = [];
+    }
+    if (toDelete[url].indexOf(label) == -1) {
+        toDelete[url].push(label);
+    }
+}
+function ensureNotToBeDeleted(url, label) {
+    if (toDelete[url]) {
+        const idx = toDelete[url].indexOf(label);
+        if (idx >= 0) {
+            console.log(`Removing from toDelete: ${label} from issue: ${url}`);
+            toDelete[url].splice(idx, 1);
+        }
+    }
+}
 
 
 /***/ }),
@@ -5895,3 +5943,4 @@ module.exports = require("url");
 /******/ 	
 /******/ }
 );
+//# sourceMappingURL=index.js.map

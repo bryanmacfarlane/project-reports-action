@@ -1,4 +1,4 @@
-module.exports =
+require('./sourcemap-register.js');module.exports =
 /******/ (function(modules, runtime) { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	// The module cache
@@ -117,15 +117,29 @@ function drillInName(name, column) {
     return `${name}-${column}`.split(' ').join('-');
 }
 function getBreakdown(config, name, issues, drillIn) {
+    console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+    console.log(`Breakdown for ${name}`);
+    console.log(`issues: ${issues.length}`);
+    console.log();
     const groupByData = {};
     const stageData = rptLib.getProjectStageIssues(issues);
+    for (const stage in stageData) {
+        console.log(`${stage}: ${stageData[stage].length}`);
+    }
+    //
+    // Breakdown by stages
+    //
     groupByData.stages = {};
     groupByData.stages.proposed = stageData[project_reports_lib_1.ProjectStages.Proposed] || [];
     drillIn(drillInName(name, 'proposed'), `${name} proposed`, groupByData.stages.proposed);
     groupByData.stages.accepted = stageData[project_reports_lib_1.ProjectStages.Accepted] || [];
     drillIn(drillInName(name, 'accepted'), `${name} accepted`, groupByData.stages.accepted);
+    console.log(stageData[project_reports_lib_1.ProjectStages.InProgress]);
     groupByData.stages.inProgress = stageData[project_reports_lib_1.ProjectStages.InProgress] || [];
     drillIn(drillInName(name, 'in-progress'), `${name} in progress`, groupByData.stages.inProgress);
+    console.log(`inProgress: ${groupByData.stages.inProgress.length}`);
+    groupByData.stages.blocked = stageData[project_reports_lib_1.ProjectStages.Blocked] || [];
+    drillIn(drillInName(name, 'blocked'), `${name} blocked`, groupByData.stages.blocked);
     // get the limit from config by fuzzy matching the group label with the setting
     let limit = Number.MAX_VALUE;
     for (const limitKey in config['limits']) {
@@ -135,20 +149,27 @@ function getBreakdown(config, name, issues, drillIn) {
         }
     }
     groupByData.stages.inProgressLimits = {
-        limit: limit,
+        limit: limit || Number.MAX_VALUE,
         flag: groupByData.stages.inProgress.length > limit
     };
     groupByData.stages.done = stageData[project_reports_lib_1.ProjectStages.Done] || [];
     drillIn(drillInName(name, 'done'), `${name} done`, groupByData.stages.done);
+    for (const stage in groupByData.stages) {
+        console.log(`Stage: ${stage}, count: ${groupByData.stages[stage].length}`);
+    }
+    //
+    // Flagging issues for discussion
+    //
     groupByData.flagged = {};
+    const notDone = issues.filter(issue => issue.project_stage !== project_reports_lib_1.ProjectStages.Done);
     const statusRegEx = new RegExp(config['status-label-match']);
     groupByData.flagged.red =
-        issues.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'red') || [];
+        notDone.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'red') || [];
     drillIn(drillInName(name, 'red'), `${name} with a status red`, groupByData.flagged.red);
     groupByData.flagged.yellow =
-        issues.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'yellow') || [];
+        notDone.filter(issue => rptLib.getStringFromLabel(issue, statusRegEx).toLowerCase() === 'yellow') || [];
     drillIn(drillInName(name, 'yellow'), `${name} with a status yellow`, groupByData.flagged.yellow);
-    groupByData.flagged.inProgressDuration = issues.filter(issue => {
+    groupByData.flagged.inProgressDuration = notDone.filter(issue => {
         if (issue.project_stage === project_reports_lib_1.ProjectStages.InProgress) {
             const days = moment().diff(moment(issue.project_in_progress_at), 'days');
             console.log(`In progress, ${days}: ${issue.title}`);
@@ -168,9 +189,12 @@ function getBreakdown(config, name, issues, drillIn) {
     // we only care about in progress being past the target date
     groupByData.flagged.pastTarget = clone_1.default(groupByData.stages.inProgress).filter(issue => {
         const d = rptLib.getLastCommentDateField(issue, config['target-date-comment-field']);
-        return d && !isNaN(d.valueOf()) && moment(d).isBefore(now);
+        return d && !isNaN(d.valueOf()) && moment(d).add(1, 'days').isBefore(now);
     });
     drillIn(drillInName(name, 'past-target'), `${name} past the target date`, groupByData.flagged.pastTarget);
+    for (const flagged in groupByData.flagged) {
+        console.log(`Flag: ${flagged}, count: ${groupByData.flagged[flagged].length}`);
+    }
     return groupByData;
 }
 function process(config, issueList, drillIn) {
@@ -179,6 +203,7 @@ function process(config, issueList, drillIn) {
     groupData.durationDays = config['flag-in-progress-days'];
     groupData.groups = {};
     const issues = issueList.getItems();
+    console.log(`issues: ${issues.length}`);
     const label = config['report-on-label'];
     if (!label) {
         throw new Error('report-on-label is required');
@@ -191,12 +216,13 @@ function process(config, issueList, drillIn) {
     if (!prefix) {
         throw new Error('group-by-label-prefix is required');
     }
-    const pattern = `(?<=${prefix}).*`;
+    const pattern = `(?<=^${prefix}).*`;
     const regex = new RegExp(pattern);
     const groupByLabels = [];
     for (const issue of issuesForLabel) {
         const labelValue = (rptLib.getStringFromLabel(issue, regex) || '').trim();
         if (labelValue && groupByLabels.indexOf(labelValue) === -1) {
+            console.log(`'${labelValue}' from ${issue.html_url}`);
             groupByLabels.push(labelValue);
         }
     }
@@ -591,7 +617,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
+exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
 const clone_1 = __importDefault(__webpack_require__(97));
 const moment_1 = __importDefault(__webpack_require__(431));
 const os = __importStar(__webpack_require__(87));
@@ -677,11 +703,11 @@ function readFieldFromBody(key, body) {
         }
         line = line.trim();
         const parts = line.split(':');
-        if (parts.length === 2 && fuzzyMatch(parts[0], key)) {
+        if (parts.length === 2 && wordsMatch(parts[0], key)) {
             val = parts[1].trim();
             break;
         }
-        else if (line.toLowerCase() === key.toLowerCase()) {
+        else if (wordsMatch(line, key)) {
             headerMatch = true;
         }
     }
@@ -697,6 +723,7 @@ function getLastCommentField(issue, field) {
         return '';
     }
     val = readFieldFromBody(field, issue.body);
+    console.log(`des: ${val}`);
     for (let i = issue.comments.length - 1; i >= 0; i--) {
         const comment = issue.comments[i];
         if (!comment) {
@@ -715,6 +742,7 @@ exports.getLastCommentField = getLastCommentField;
 function getLastCommentDateField(issue, field) {
     let d = null;
     const val = getLastCommentField(issue, field);
+    console.log(`val: ${val}`);
     if (val) {
         d = new Date(val);
     }
@@ -725,6 +753,17 @@ function sumCardProperty(cards, prop) {
     return cards.reduce((a, b) => a + (b[prop] || 0), 0);
 }
 exports.sumCardProperty = sumCardProperty;
+function wordsMatch(content, match) {
+    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    if (!matchWords || !contentWords) {
+        return false;
+    }
+    matchWords = matchWords.map(item => item.toLowerCase());
+    contentWords = contentWords.map(item => item.toLowerCase());
+    return matchWords.length === contentWords.length && matchWords.every((value, index) => value === contentWords[index]);
+}
+exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
     let matchWords = match.match(/[a-zA-Z0-9]+/g);
     matchWords = matchWords.map(item => item.toLowerCase());
@@ -749,14 +788,18 @@ exports.ProjectStages = {
     Proposed: 'Proposed',
     Accepted: 'Accepted',
     InProgress: 'In-Progress',
+    Blocked: 'Blocked',
     Done: 'Done',
     Missing: 'Missing'
 };
 function getProjectStageIssues(issues) {
     const projIssues = {};
     for (const projIssue of issues) {
+        console.log(projIssue.html_url);
         const stage = projIssue['project_stage'];
+        console.log(stage);
         if (!stage) {
+            console.log(`no stage: ${projIssue.html_url}`);
             // the engine will handle and add to an issues list
             continue;
         }
@@ -772,15 +815,23 @@ const stageLevel = {
     None: 0,
     Proposed: 1,
     Accepted: 2,
-    'In-Progress': 3,
-    Done: 4,
-    Unmapped: 5
+    Blocked: 3,
+    'In-Progress': 4,
+    Done: 5,
+    Unmapped: 6
 };
 class IssueList {
     constructor(identifier) {
         // keep in order indexed by level above
         // TODO: unify both to avoid out of sync problems
-        this.stageAtNames = ['none', 'project_proposed_at', 'project_accepted_at', 'project_in_progress_at', 'project_done_at'];
+        this.stageAtNames = [
+            'none',
+            'project_proposed_at',
+            'project_accepted_at',
+            'project_blocked_at',
+            'project_in_progress_at',
+            'project_done_at'
+        ];
         this.seen = new Map();
         this.identifier = identifier;
         this.items = [];
@@ -815,14 +866,18 @@ class IssueList {
         return this.seen.get(identifier);
     }
     getItems() {
+        console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        console.log('getItems ...');
         if (this.processed) {
-            return this.processed;
+            // return clone(this.processed)
+            this.processed;
         }
         // call process
         for (const item of this.items) {
             this.processStages(item);
         }
         this.processed = this.items;
+        //return clone(this.processed)
         return this.processed;
     }
     getItemsAsof(datetime) {
@@ -7218,3 +7273,4 @@ module.exports = require("url");
 /******/ 	
 /******/ }
 );
+//# sourceMappingURL=index.js.map

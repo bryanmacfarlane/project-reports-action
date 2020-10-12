@@ -1,4 +1,4 @@
-module.exports =
+require('./sourcemap-register.js');module.exports =
 /******/ (function(modules, runtime) { // webpackBootstrap
 /******/ 	"use strict";
 /******/ 	// The module cache
@@ -325,8 +325,10 @@ class GitHubClient {
     }
     getCardsForColumns(colId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const cards = yield this.octokit.projects.listCards({ column_id: colId });
-            return cards.data;
+            return yield this.octokit.paginate('GET /projects/columns/:column_id/cards', {
+                column_id: colId,
+                per_page: 100
+            });
         });
     }
     getIssueComments(owner, repo, issue_number) {
@@ -3114,7 +3116,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
+exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
 const clone_1 = __importDefault(__webpack_require__(97));
 const moment_1 = __importDefault(__webpack_require__(482));
 const os = __importStar(__webpack_require__(87));
@@ -3200,11 +3202,11 @@ function readFieldFromBody(key, body) {
         }
         line = line.trim();
         const parts = line.split(':');
-        if (parts.length === 2 && fuzzyMatch(parts[0], key)) {
+        if (parts.length === 2 && wordsMatch(parts[0], key)) {
             val = parts[1].trim();
             break;
         }
-        else if (line.toLowerCase() === key.toLowerCase()) {
+        else if (wordsMatch(line, key)) {
             headerMatch = true;
         }
     }
@@ -3220,6 +3222,7 @@ function getLastCommentField(issue, field) {
         return '';
     }
     val = readFieldFromBody(field, issue.body);
+    console.log(`des: ${val}`);
     for (let i = issue.comments.length - 1; i >= 0; i--) {
         const comment = issue.comments[i];
         if (!comment) {
@@ -3238,6 +3241,7 @@ exports.getLastCommentField = getLastCommentField;
 function getLastCommentDateField(issue, field) {
     let d = null;
     const val = getLastCommentField(issue, field);
+    console.log(`val: ${val}`);
     if (val) {
         d = new Date(val);
     }
@@ -3248,6 +3252,17 @@ function sumCardProperty(cards, prop) {
     return cards.reduce((a, b) => a + (b[prop] || 0), 0);
 }
 exports.sumCardProperty = sumCardProperty;
+function wordsMatch(content, match) {
+    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    if (!matchWords || !contentWords) {
+        return false;
+    }
+    matchWords = matchWords.map(item => item.toLowerCase());
+    contentWords = contentWords.map(item => item.toLowerCase());
+    return matchWords.length === contentWords.length && matchWords.every((value, index) => value === contentWords[index]);
+}
+exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
     let matchWords = match.match(/[a-zA-Z0-9]+/g);
     matchWords = matchWords.map(item => item.toLowerCase());
@@ -3272,14 +3287,18 @@ exports.ProjectStages = {
     Proposed: 'Proposed',
     Accepted: 'Accepted',
     InProgress: 'In-Progress',
+    Blocked: 'Blocked',
     Done: 'Done',
     Missing: 'Missing'
 };
 function getProjectStageIssues(issues) {
     const projIssues = {};
     for (const projIssue of issues) {
+        console.log(projIssue.html_url);
         const stage = projIssue['project_stage'];
+        console.log(stage);
         if (!stage) {
+            console.log(`no stage: ${projIssue.html_url}`);
             // the engine will handle and add to an issues list
             continue;
         }
@@ -3295,15 +3314,23 @@ const stageLevel = {
     None: 0,
     Proposed: 1,
     Accepted: 2,
-    'In-Progress': 3,
-    Done: 4,
-    Unmapped: 5
+    Blocked: 3,
+    'In-Progress': 4,
+    Done: 5,
+    Unmapped: 6
 };
 class IssueList {
     constructor(identifier) {
         // keep in order indexed by level above
         // TODO: unify both to avoid out of sync problems
-        this.stageAtNames = ['none', 'project_proposed_at', 'project_accepted_at', 'project_in_progress_at', 'project_done_at'];
+        this.stageAtNames = [
+            'none',
+            'project_proposed_at',
+            'project_accepted_at',
+            'project_blocked_at',
+            'project_in_progress_at',
+            'project_done_at'
+        ];
         this.seen = new Map();
         this.identifier = identifier;
         this.items = [];
@@ -3338,14 +3365,18 @@ class IssueList {
         return this.seen.get(identifier);
     }
     getItems() {
+        console.log('xxxxxxxxxxxxxxxxxxxxxxxxxxxxx');
+        console.log('getItems ...');
         if (this.processed) {
-            return this.processed;
+            // return clone(this.processed)
+            this.processed;
         }
         // call process
         for (const item of this.items) {
             this.processStages(item);
         }
         this.processed = this.items;
+        //return clone(this.processed)
         return this.processed;
     }
     getItemsAsof(datetime) {
@@ -7167,12 +7198,13 @@ function generate(token, configYaml) {
                 if (!target.stages) {
                     continue;
                 }
-                const defaultStages = ['Proposed', 'Accepted', 'In-Progress', 'Done', 'Unmapped'];
+                const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
                 for (const phase of defaultStages) {
                     if (!target.columnMap[phase]) {
                         target.columnMap[phase] = [];
                     }
                 }
+                target.columnMap['Blocked'].push('Blocked');
                 target.columnMap['Proposed'].push('Proposed', 'New', 'Ready for Review', 'Ready for Triage', 'Not Started');
                 target.columnMap['Accepted'].push('Accepted', 'Approved', 'Ready for Work', 'Up Next');
                 target.columnMap['In-Progress'].push('In-Progress', 'In progress', 'InProgress', 'Active', 'Started');
@@ -22718,3 +22750,4 @@ module.exports = new Type('tag:yaml.org,2002:map', {
 /******/ 	
 /******/ }
 );
+//# sourceMappingURL=index.js.map
