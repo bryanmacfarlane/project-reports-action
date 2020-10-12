@@ -10,12 +10,11 @@ mkdir -p "${RUNNER_TEMP}"
 export INPUT_CONFIGPATH=${1:-samples/sample.yaml}
 echo "Running ${INPUT_CONFIGPATH}"
 
-[ -n "${GHPAT}" ] || { 
-    echo "set GHPAT envvar" && exit  1
+[ -n "${INPUT_TOKEN}" ] || { 
+    echo "set INPUT_TOKEN envvar to your github PAT" && exit  1
 }
 
 export GITHUB_WORKSPACE="${SCRIPT_DIR}"
-export INPUT_TOKEN="${GHPAT}"
 
 echo "Running action"
 npm run build

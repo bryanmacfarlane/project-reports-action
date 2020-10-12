@@ -6,7 +6,7 @@ function build_module() {
     filename=$(basename $1)
     module=${filename%.*}
 
-    cmd="ncc build ${filepath} -o ./dist/$2/${module} > /dev/null"
+    cmd="ncc build ${filepath} --source-map -o ./dist/$2/${module} > /dev/null"
     echo
     echo $cmd
     eval ${cmd}
@@ -16,7 +16,7 @@ echo
 echo Building generator
 echo
 npx tsc 
-npx ncc build ./index.ts -o ./dist  > /dev/null
+npx ncc build ./index.ts --source-map -o ./dist  > /dev/null
 # cp ./interfaces.js ./dist
 
 echo
