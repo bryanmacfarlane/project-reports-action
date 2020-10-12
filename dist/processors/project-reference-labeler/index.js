@@ -136,20 +136,23 @@ function ensureOnlyLabel(github, issue, labelName, prefix, config) {
             // add, but first ...
             // remove any other labels with that prefix
             for (const label of issue.labels) {
-                if (label.name.trim().startsWith(prefix)) {
-                    console.log(`Removing label: ${label.name}`);
-                    if (write) {
-                        yield github.removeIssueLabel(issue.html_url, label.name);
-                    }
+                if (label.name.trim().startsWith(prefix) && label.name.trim().toLowerCase() !== labelName.trim().toLowerCase()) {
+                    console.log(`Label to potentially be removed: ${label.name}`);
+                    addToBeDeleted(issue.html_url, label.name);
+                    // if (write) {
+                    //   await github.removeIssueLabel(issue.html_url, label.name)
+                    // }
                 }
             }
             console.log(`Adding label: ${labelName}`);
+            ensureNotToBeDeleted(issue.html_url, labelName);
             if (write) {
                 yield github.ensureIssueHasLabel(issue.html_url, labelName, config['label-color']);
             }
         }
         else {
             console.log(`Label already exists: ${labelName}`);
+            ensureNotToBeDeleted(issue.html_url, labelName);
         }
     });
 }
@@ -199,9 +202,38 @@ function process(target, config, data, github) {
                 console.log();
             }
         }
+        console.log('Cleaning up labels');
+        console.log(JSON.stringify(toDelete, null, 2));
+        for (const issueUrl in toDelete) {
+            console.log(`Cleaning up labels for ${issueUrl}`);
+            for (const label of toDelete[issueUrl]) {
+                console.log(`Removing label: ${label}`);
+                if (config['write-labels']) {
+                    yield github.removeIssueLabel(issueUrl, label);
+                }
+            }
+        }
     });
 }
 exports.process = process;
+let toDelete = {};
+function addToBeDeleted(url, label) {
+    if (!toDelete[url]) {
+        toDelete[url] = [];
+    }
+    if (toDelete[url].indexOf(label) == -1) {
+        toDelete[url].push(label);
+    }
+}
+function ensureNotToBeDeleted(url, label) {
+    if (toDelete[url]) {
+        const idx = toDelete[url].indexOf(label);
+        if (idx >= 0) {
+            console.log(`Removing from toDelete: ${label} from issue: ${url}`);
+            toDelete[url].splice(idx, 1);
+        }
+    }
+}
 
 
 /***/ }),
