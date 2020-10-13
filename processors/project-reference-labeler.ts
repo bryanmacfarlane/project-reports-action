@@ -1,5 +1,6 @@
 import moment = require('moment')
 import * as url from 'url'
+import * as path from 'path'
 import {GitHubClient} from '../github'
 import {CrawlingTarget} from '../interfaces'
 import {IssueList, ProjectIssue} from '../project-reports-lib'
@@ -113,15 +114,15 @@ export async function process(
     console.log()
 
     // get issues that have a checkbox in front of it
-    var urls = issue.body?.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g)
+    let urls = issue.body?.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g)
     
     // in github local refs are possible in an issue such as #123 wil link to issues 123 in the same repo as the current issue.
     // get the current issue url and use it for the url to get issues for refs.
     const localRefs = issue.body?.match(/(?<=-\s*\[.*?\].*?)(?<=#)([0-9]+)/g)
-    const repoIssuesUrl = issue.html_url.substring(0, issue.html_url.lastIndexOf("/"));
+    const repoIssuesUrl = path.dirname(issue.html_url)
     // add refs + local url ref to urls
     localRefs.forEach(function (localRef) {
-      const url = `${repoIssuesUrl}/${localRef}`
+      const url = path.join(repoIssuesUrl, localRef)
       console.log(`Building url for local ref ${localRef} for repo ${repoIssuesUrl}`)
       urls.push(url);
     });
