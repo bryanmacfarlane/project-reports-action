@@ -110,7 +110,7 @@ const noiseWords = ['the', 'in', 'and', 'of', '&'];
 // needs to be less than 50 chars, so we filter down to words, no noise words and then start removing words at end
 function cleanLabelName(prefix, title) {
     title = title.replace(/\([^()]*\)/g, '').replace(/ *\[[^\]]*]/, '');
-    let words = title.match(/[a-zA-Z0-9&]+/g);
+    let words = title.match(/[a-zA-Z0-9'&]+/g);
     words = words.filter(word => noiseWords.indexOf(word.toLowerCase()) < 0);
     let label = `${prefix.trim()} Invalid`;
     while (words.length > 0) {
@@ -139,9 +139,6 @@ function ensureOnlyLabel(github, issue, labelName, prefix, config) {
                 if (label.name.trim().startsWith(prefix) && label.name.trim().toLowerCase() !== labelName.trim().toLowerCase()) {
                     console.log(`Label to potentially be removed: ${label.name}`);
                     addToBeDeleted(issue.html_url, label.name);
-                    // if (write) {
-                    //   await github.removeIssueLabel(issue.html_url, label.name)
-                    // }
                 }
             }
             console.log(`Adding label: ${labelName}`);
@@ -216,7 +213,7 @@ function process(target, config, data, github) {
     });
 }
 exports.process = process;
-let toDelete = {};
+const toDelete = {};
 function addToBeDeleted(url, label) {
     if (!toDelete[url]) {
         toDelete[url] = [];

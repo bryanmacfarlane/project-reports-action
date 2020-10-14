@@ -30,7 +30,7 @@ const noiseWords = ['the', 'in', 'and', 'of', '&']
 function cleanLabelName(prefix: string, title: string) {
   title = title.replace(/\([^()]*\)/g, '').replace(/ *\[[^\]]*]/, '')
 
-  let words = title.match(/[a-zA-Z0-9&]+/g)
+  let words = title.match(/[a-zA-Z0-9'&]+/g)
   words = words.filter(word => noiseWords.indexOf(word.toLowerCase()) < 0)
 
   let label = `${prefix.trim()} Invalid`
