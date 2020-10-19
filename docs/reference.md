@@ -11,3 +11,7 @@
 :wave: [project-new](./project-new.md): List of new work added to the board in last n days.
 
 :checkered_flag: [project-done](./project-done.md): List of work completed in last n days.
+
+# Processing Sections
+
+:fast_forward: [project-reference-labeler](./project-reference-labeler.md): For a board, follows issue references (url, mention) in a work checklist and adds labels to the target issue.
