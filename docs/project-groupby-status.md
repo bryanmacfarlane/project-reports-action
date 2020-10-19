@@ -2,8 +2,6 @@
 
 Shows breakdown counts of each stage, flags in-progress over limits, yellow and red status, in-progress over specified days, missing target dates and past target date.
 
-![project-groupby-status](./project-groupby-status.png)
-
 ## Config Options
 
 The config values below are optional with the values shown being the defaults if not supplied.
