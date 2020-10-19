@@ -181,7 +181,7 @@ function process(target, config, data, github) {
             const urls = (_a = issue.body) === null || _a === void 0 ? void 0 : _a.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g);
             // in github local refs are possible in an issue such as #123 wil link to issues 123 in the same repo as the current issue.
             // get the current issue url and use it for the url to get issues for refs.
-            const localRefs = (_b = issue.body) === null || _b === void 0 ? void 0 : _b.match(/(?<=-\s*\[.*?\].*?)(?<=#)([0-9]+)/g);
+            const localRefs = ((_b = issue.body) === null || _b === void 0 ? void 0 : _b.match(/(?<=-\s*\[.*?\].*?)(?<=#)([0-9]+)/g)) || [];
             const repoIssuesUrl = path.dirname(issue.html_url);
             // add refs + local url ref to urls
             localRefs.forEach(function (localRef) {

@@ -22,7 +22,6 @@ export function getDefaultConfiguration(): any {
     'group-by-label-prefix': '> ',
     'target-date-comment-field': 'target date',
     'flag-in-progress-days': 21,
-    'wip-limit': 2,
     limits: {},
     'status-label-match': '(^green$|^yellow$|^red$)'
   }
