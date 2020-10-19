@@ -87,6 +87,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.process = exports.getDefaultConfiguration = exports.reportType = void 0;
 const moment = __webpack_require__(431);
+const path = __importStar(__webpack_require__(622));
 const url = __importStar(__webpack_require__(835));
 const now = moment();
 const reportType = 'project';
@@ -155,7 +156,7 @@ function ensureOnlyLabel(github, issue, labelName, prefix, config) {
 }
 // get alphanumeric clean version of string (strip special chars). spaces to chars.  remove common filler words (a, the, &, and)
 function process(target, config, data, github) {
-    var _a;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         for (const issue of data.getItems()) {
             console.log();
@@ -178,6 +179,16 @@ function process(target, config, data, github) {
             console.log();
             // get issues that have a checkbox in front of it
             const urls = (_a = issue.body) === null || _a === void 0 ? void 0 : _a.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g);
+            // in github local refs are possible in an issue such as #123 wil link to issues 123 in the same repo as the current issue.
+            // get the current issue url and use it for the url to get issues for refs.
+            const localRefs = (_b = issue.body) === null || _b === void 0 ? void 0 : _b.match(/(?<=-\s*\[.*?\].*?)(?<=#)([0-9]+)/g);
+            const repoIssuesUrl = path.dirname(issue.html_url);
+            // add refs + local url ref to urls
+            localRefs.forEach(function (localRef) {
+                const url = path.join(repoIssuesUrl, localRef);
+                console.log(`Building url for local ref ${localRef} for repo ${repoIssuesUrl}`);
+                urls.push(url);
+            });
             for (const match of urls || []) {
                 try {
                     console.log(`match: ${match}`);
@@ -5907,6 +5918,13 @@ function ensureNotToBeDeleted(url, label) {
 
 })));
 
+
+/***/ }),
+
+/***/ 622:
+/***/ (function(module) {
+
+module.exports = require("path");
 
 /***/ }),
 

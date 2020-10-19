@@ -256,7 +256,8 @@ function getLimitContents(count: number, flag: boolean) {
 
 function getRow(name: string, days: number, wips: number, data: GroupByData, lines: string[]): BreakdownRow {
   const breakdownRow = <BreakdownRow>{}
-  breakdownRow.name = name === 'Total' ? `**${name}**` : `**${name} (${data.stages.inProgressLimits.limit})**`
+  const limit = data.stages.inProgressLimits.limit
+  breakdownRow.name = limit === Number.MAX_VALUE ? `**${name}**` : `**${name} (${data.stages.inProgressLimits.limit})**`
 
   breakdownRow.proposed = `[${data.stages.proposed.length}](./${drillInName(name, 'proposed')}.md)`
   breakdownRow.accepted = `[${data.stages.accepted.length}](./${drillInName(name, 'accepted')}.md)`
