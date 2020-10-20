@@ -312,6 +312,8 @@ export interface ProjectIssue {
   project_proposed_at: Date
   project_accepted_at: Date
   project_in_progress_at: Date
+  // the projected date the issue will be done
+  project_target_date: Date
 
   // cleared if not currently blocked
   project_blocked_at: Date
