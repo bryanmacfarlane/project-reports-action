@@ -203,6 +203,12 @@ function process(config, issueList, drillIn) {
     groupData.groups = {};
     const issues = issueList.getItems();
     console.log(`issues: ${issues.length}`);
+    issues.map(issue => {
+        const d = rptLib.getLastCommentDateField(issue, config['target-date-comment-field']);
+        if (d && !isNaN(d.valueOf())) {
+            issue.project_target_date = d;
+        }
+    });
     const label = config['report-on-label'];
     if (!label) {
         throw new Error('report-on-label is required');
