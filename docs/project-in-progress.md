@@ -17,6 +17,7 @@ reports:
           last-updated-days-flag: 3.0
           last-updated-scheme": "LastCommentPattern"
           last-updated-scheme-data": "^(#){1,4} [Uu]pdate"
+          target-date-comment-field: 'target date'
 ```
 
 ### report-on-label
@@ -50,3 +51,28 @@ The method of detecting an update. Only LastCommentPattern is currently supporte
 The pattern to match when looking for the last comment. The default is to look for any comment with a markdown header of "Update"
 
 **Default**: ^(#){1,4} [Uu]pdate
+
+### target-date-comment-field
+
+The target date field name for the issue. It will first look in the latest issue comment for a value and then fall back to looking for it in the body of the issue.
+
+It will match the field and value on the same line or a separate line. Note that prefixes like the `##` header are ignored and not matched on so there's no need to specify that in your config.
+
+```
+target date: 2020-10-21
+```
+
+```
+## target date
+
+2020-10-21
+```
+
+The date values are [any valid javascript date string](https://stackoverflow.com/a/51715260/775184). So, both of these are valid:
+
+```
+10-21-2020
+2020-10-21
+```
+
+An item is considered past target date the day **after** the specified target date.

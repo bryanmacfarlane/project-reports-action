@@ -96,7 +96,8 @@
     ],
     "project_proposed_at": "2020-08-01T20:32:49Z",
     "project_added_at": "2020-08-01T20:32:49Z",
-    "project_stage": "Proposed"
+    "project_stage": "Proposed",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 11,
@@ -238,7 +239,8 @@
     ],
     "project_proposed_at": "2020-07-14T20:58:50Z",
     "project_added_at": "2020-07-14T20:58:50Z",
-    "project_stage": "Proposed"
+    "project_stage": "Proposed",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 10,
@@ -489,7 +491,8 @@
     "project_proposed_at": "2020-07-14T19:59:25Z",
     "project_accepted_at": "2020-07-14T19:59:49Z",
     "project_added_at": "2020-07-14T19:59:25Z",
-    "project_stage": "Accepted"
+    "project_stage": "Accepted",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 7,
@@ -785,7 +788,8 @@
     "project_proposed_at": "2020-07-14T19:48:05Z",
     "project_accepted_at": "2020-07-14T21:00:01Z",
     "project_added_at": "2020-07-14T19:48:05Z",
-    "project_stage": "Accepted"
+    "project_stage": "Accepted",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 4,
@@ -968,7 +972,8 @@
     "project_proposed_at": "2020-08-01T18:47:30Z",
     "project_accepted_at": "2020-08-01T18:48:30Z",
     "project_added_at": "2020-08-01T18:47:30Z",
-    "project_stage": "Accepted"
+    "project_stage": "Accepted",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 17,
@@ -1108,7 +1113,8 @@
     "project_proposed_at": "2020-08-01T20:31:16Z",
     "project_accepted_at": "2020-08-01T20:31:48Z",
     "project_added_at": "2020-08-01T20:31:16Z",
-    "project_stage": "Accepted"
+    "project_stage": "Accepted",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 5,
@@ -1510,7 +1516,8 @@
     "project_accepted_at": "2020-07-14T20:56:56Z",
     "project_in_progress_at": "2020-07-14T20:59:42Z",
     "project_added_at": "2020-07-14T17:30:02Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 13,
@@ -1932,7 +1939,8 @@
     "project_accepted_at": "2020-07-19T19:29:53Z",
     "project_in_progress_at": "2020-07-19T19:30:05Z",
     "project_added_at": "2020-07-19T19:29:05Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 9,
@@ -2296,7 +2304,8 @@
     "project_accepted_at": "2020-07-14T19:54:43Z",
     "project_in_progress_at": "2020-07-14T19:59:42Z",
     "project_added_at": "2020-07-14T19:50:15Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 12,
@@ -2563,7 +2572,8 @@
     "project_accepted_at": "2020-07-19T19:44:51Z",
     "project_in_progress_at": "2020-07-23T16:23:34Z",
     "project_added_at": "2020-07-19T19:20:07Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 14,
@@ -2963,7 +2973,8 @@
     "project_accepted_at": "2020-07-19T19:33:15Z",
     "project_in_progress_at": "2020-07-19T19:34:24Z",
     "project_added_at": "2020-07-19T19:31:01Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 16,
@@ -3144,7 +3155,8 @@
     "project_accepted_at": "2020-07-22T17:52:32Z",
     "project_in_progress_at": "2020-07-22T17:52:34Z",
     "project_added_at": "2020-07-22T17:46:05Z",
-    "project_stage": "In-Progress"
+    "project_stage": "In-Progress",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 8,
@@ -3778,7 +3790,8 @@
     "project_in_progress_at": "2020-07-14T19:59:45Z",
     "project_done_at": "2020-07-14T21:14:27Z",
     "project_added_at": "2020-07-14T19:49:10Z",
-    "project_stage": "Done"
+    "project_stage": "Done",
+    "project_target_date": "2020-08-01T20:32:49Z"
   },
   {
     "number": 6,
@@ -4316,6 +4329,7 @@
     "project_in_progress_at": "2020-07-14T19:59:39Z",
     "project_done_at": "2020-07-14T21:13:37Z",
     "project_added_at": "2020-07-14T19:46:09Z",
-    "project_stage": "Done"
+    "project_stage": "Done",
+    "project_target_date": "2020-08-01T20:32:49Z"
   }
 ]
