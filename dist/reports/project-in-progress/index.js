@@ -105,6 +105,7 @@ function getDefaultConfiguration() {
         'last-updated-days-flag': 3.0,
         'last-updated-scheme': 'LastCommentPattern',
         'last-updated-scheme-data': '^(#){1,4} [Uu]pdate',
+        'target-date-comment-field': 'target date',
         // last status a week before this wednesday (last wednesday)
         'status-day': 'Wednesday',
         'previous-days-ago': 7,
@@ -189,6 +190,10 @@ function process(config, issueList, drillIn) {
             const then = moment_1.default(card.project_in_progress_at);
             card.hoursInProgress = now.diff(then, 'hours', true);
             card.inProgressSince = now.to(then);
+        }
+        const d = rptLib.getLastCommentDateField(card, config['target-date-comment-field']);
+        if (d && !isNaN(d.valueOf())) {
+            card.project_target_date = d;
         }
         return card;
     });
@@ -646,7 +651,7 @@ exports.getStringFromLabel = getStringFromLabel;
 function readFieldFromBody(key, body) {
     let val = '';
     let headerMatch = false;
-    if (!body || body.length === 0) {
+    if (!key || !body || body.length === 0) {
         return val;
     }
     const lines = body.split(os.EOL);
