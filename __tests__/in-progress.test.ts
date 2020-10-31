@@ -1,6 +1,6 @@
-import {IssueList, ProjectIssue} from '../project-reports-lib'
+import { IssueList, ProjectIssue } from '../project-reports-lib'
 import * as inProgress from '../reports/project-in-progress'
-import {IssueCardEx, ProgressData} from '../reports/project-in-progress'
+import { IssueCardEx, ProgressData } from '../reports/project-in-progress'
 import projectData from './project-data.test.json'
 
 const config: any = {
@@ -14,7 +14,8 @@ const config: any = {
   'last-updated-scheme-data': '^(#){1,4} [Uu]pdate',
   'status-day': 'Wednesday',
   'previous-days-ago': 7,
-  'previous-hour-utc': 17
+  'previous-hour-utc': 17,
+  'target-date-comment-field': 'target date'
 }
 
 describe('project-in-progress', () => {

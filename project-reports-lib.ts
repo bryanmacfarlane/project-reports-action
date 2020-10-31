@@ -87,7 +87,7 @@ export function readFieldFromBody(key: string, body: string): string {
   let val = ''
   let headerMatch = false
 
-  if (!body || body.length === 0) {
+  if (!key || !body || body.length === 0) {
     return val
   }
 

@@ -427,7 +427,7 @@ exports.getStringFromLabel = getStringFromLabel;
 function readFieldFromBody(key, body) {
     let val = '';
     let headerMatch = false;
-    if (!body || body.length === 0) {
+    if (!key || !body || body.length === 0) {
         return val;
     }
     const lines = body.split(os.EOL);

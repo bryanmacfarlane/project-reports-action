@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import {CrawlingTarget} from '../interfaces'
+import { CrawlingTarget } from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
+import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export {reportType}
+export { reportType }
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
@@ -27,6 +27,7 @@ export function getDefaultConfiguration(): any {
     'last-updated-days-flag': 3.0,
     'last-updated-scheme': 'LastCommentPattern',
     'last-updated-scheme-data': '^(#){1,4} [Uu]pdate',
+    'target-date-comment-field': 'target date',
     // last status a week before this wednesday (last wednesday)
     'status-day': 'Wednesday',
     'previous-days-ago': 7,
@@ -143,6 +144,10 @@ export function process(
       card.inProgressSince = now.to(then)
     }
 
+    const d = rptLib.getLastCommentDateField(card, config['target-date-comment-field'])
+    if (d && !isNaN(d.valueOf())) {
+      card.project_target_date = d
+    }
     return card
   })
 
