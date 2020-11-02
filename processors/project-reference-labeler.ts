@@ -114,7 +114,7 @@ export async function process(
     console.log()
 
     // get issues that have a checkbox in front of it
-    const urls = issue.body?.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g)
+    const urls = issue.body?.match(/(?<=-\s*\[.*?\].*?)(https?:\/{2}(?:[/-\w.]|(?:%[\da-fA-F]{2}))+)/g) || []
 
     // in github local refs are possible in an issue such as #123 wil link to issues 123 in the same repo as the current issue.
     // get the current issue url and use it for the url to get issues for refs.
