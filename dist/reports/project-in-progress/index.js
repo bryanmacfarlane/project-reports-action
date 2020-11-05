@@ -725,10 +725,19 @@ function wordsMatch(content, match) {
 }
 exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
-    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    if (!content || !match) {
+        return false;
+    }
+    if (content.toLocaleLowerCase().trim() === match.toLocaleLowerCase().trim()) {
+        return true;
+    }
+    let matchWords = match.match(/[a-zA-Z0-9]+/g) || [];
     matchWords = matchWords.map(item => item.toLowerCase());
-    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g) || [];
     contentWords = contentWords.map(item => item.toLowerCase());
+    if (matchWords.length === 0 || contentWords.length === 0) {
+        return false;
+    }
     let isMatch = true;
     for (const matchWord of matchWords) {
         if (contentWords.indexOf(matchWord) === -1) {
