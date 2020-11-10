@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import {CrawlingTarget} from '../interfaces'
+import { CrawlingTarget } from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
+import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export {reportType}
+export { reportType }
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
