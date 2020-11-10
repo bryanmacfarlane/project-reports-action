@@ -31,7 +31,9 @@ export function getDefaultConfiguration(): any {
     // last status a week before this wednesday (last wednesday)
     'status-day': 'Wednesday',
     'previous-days-ago': 7,
-    'previous-hour-utc': 17
+    'previous-hour-utc': 17,
+    'additional-columns': [],
+    'additional-columns-data': []
   }
 }
 
@@ -48,6 +50,12 @@ export interface IssueCardEx extends ProjectIssue {
   lastUpdatedAgo: string
   hoursInProgress: number
   inProgressSince: string
+  additionalColumns: AdditionalColumns[]
+}
+
+export type AdditionalColumns = {
+  columnName: string,
+  value: string
 }
 
 const statusLevels = {
@@ -148,6 +156,19 @@ export function process(
     if (d && !isNaN(d.valueOf())) {
       card.project_target_date = d
     }
+
+    if (config['additional-columns'].length > 0) {
+      card.additionalColumns = []
+
+      let counter = 0;
+      while (counter < config['additional-columns'].length) {
+        const columnValue = rptLib.getLastCommentField(card, config['additional-columns-data'][counter])
+        const columnWithValue: AdditionalColumns = { columnName: config['additional-columns'][counter], value: columnValue }
+        card.additionalColumns[counter] = columnWithValue
+        counter++;
+      }
+    }
+
     return card
   })
 
@@ -165,6 +186,7 @@ interface ProgressRow {
   previous: string
   inProgress: string
   lastUpdated: string
+  [key: string]: string
 }
 
 // TODO: we could make this configurable
@@ -217,6 +239,14 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
     }
 
     progressRow.inProgress = card.inProgressSince
+
+    if (card.additionalColumns.length > 0) {
+      let counter = 0
+      while (counter < card.additionalColumns.length) {
+        progressRow[card.additionalColumns[counter].columnName] = card.additionalColumns[counter].value
+        counter++
+      }
+    }
 
     rows.push(progressRow)
   }
