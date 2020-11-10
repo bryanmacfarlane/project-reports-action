@@ -7,8 +7,8 @@ import * as os from 'os'
 import * as path from 'path'
 import sanitize from 'sanitize-filename'
 import * as url from 'url'
-import { Crawler } from './crawler'
-import { GitHubClient } from './github'
+import {Crawler} from './crawler'
+import {GitHubClient} from './github'
 import {
   CrawlingConfig,
   CrawlingTarget,
@@ -20,7 +20,7 @@ import {
   ReportSnapshot,
   RuntimeModule
 } from './interfaces'
-import { IssueList, ProjectIssue } from './project-reports-lib'
+import {IssueList, ProjectIssue} from './project-reports-lib'
 import * as drillInRpt from './reports/drill-in'
 import * as util from './util'
 

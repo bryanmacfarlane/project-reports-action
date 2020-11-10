@@ -2,12 +2,12 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import { CrawlingTarget } from '../interfaces'
+import {CrawlingTarget} from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import { IssueList, ProjectIssue, ProjectStages } from '../project-reports-lib'
+import {IssueList, ProjectIssue, ProjectStages} from '../project-reports-lib'
 
 const reportType = 'project'
-export { reportType }
+export {reportType}
 
 export function getDefaultConfiguration(): any {
   return <any>{
@@ -74,9 +74,9 @@ export function process(
   const reportOn = config['report-on-label']
   console.log(`Reporting on labels ${reportOn}`)
   const items = issueList.getItems()
-  const filtered = reportOn === '*'? clone(items) : clone(rptLib.filterByLabel(items, reportOn))
+  const filtered = reportOn === '*' ? clone(items) : clone(rptLib.filterByLabel(items, reportOn))
   console.log(`Calculating cycle time for ${filtered.length} issues`)
-  
+
   const issues = new IssueList(issue => issue.html_url)
   issues.add(filtered)
 
