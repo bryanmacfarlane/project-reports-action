@@ -925,8 +925,13 @@ function percentileCycleTime(percentile, issues) {
     return ct;
 }
 function process(config, issueList, drillIn) {
+    console.log('> cycle-time::process');
     const cycleTimeData = {};
-    const filtered = rptLib.filterByLabel(issueList.getItems(), config['report-on-label']);
+    const reportOn = config['report-on-label'];
+    console.log(`Reporting on labels ${reportOn}`);
+    const items = issueList.getItems();
+    const filtered = reportOn === '*' ? clone_1.default(items) : clone_1.default(rptLib.filterByLabel(items, reportOn));
+    console.log(`Calculating cycle time for ${filtered.length} issues`);
     const issues = new project_reports_lib_1.IssueList(issue => issue.html_url);
     issues.add(filtered);
     const windowDays = config['window-days'];
