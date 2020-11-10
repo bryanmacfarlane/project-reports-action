@@ -109,7 +109,9 @@ function getDefaultConfiguration() {
         // last status a week before this wednesday (last wednesday)
         'status-day': 'Wednesday',
         'previous-days-ago': 7,
-        'previous-hour-utc': 17
+        'previous-hour-utc': 17,
+        'additional-columns': [],
+        'additional-columns-data': []
     };
 }
 exports.getDefaultConfiguration = getDefaultConfiguration;
@@ -195,6 +197,16 @@ function process(config, issueList, drillIn) {
         if (d && !isNaN(d.valueOf())) {
             card.project_target_date = d;
         }
+        if (config['additional-columns'].length > 0) {
+            card.additionalColumns = [];
+            let counter = 0;
+            while (counter < config['additional-columns'].length) {
+                const columnValue = rptLib.getLastCommentField(card, config['additional-columns-data'][counter]);
+                const columnWithValue = { columnName: config['additional-columns'][counter], value: columnValue };
+                card.additionalColumns[counter] = columnWithValue;
+                counter++;
+            }
+        }
         return card;
     });
     cardsForType.sort(sortCards);
@@ -244,6 +256,13 @@ function renderMarkdown(targets, processedData) {
             progressRow.lastUpdated += ' :triangular_flag_on_post:';
         }
         progressRow.inProgress = card.inProgressSince;
+        if (card.additionalColumns.length > 0) {
+            let counter = 0;
+            while (counter < card.additionalColumns.length) {
+                progressRow[card.additionalColumns[counter].columnName] = card.additionalColumns[counter].value;
+                counter++;
+            }
+        }
         rows.push(progressRow);
     }
     let table;

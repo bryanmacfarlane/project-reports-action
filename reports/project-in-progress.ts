@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import { CrawlingTarget } from '../interfaces'
+import {CrawlingTarget} from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
+import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export { reportType }
+export {reportType}
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
@@ -54,7 +54,7 @@ export interface IssueCardEx extends ProjectIssue {
 }
 
 export type AdditionalColumns = {
-  columnName: string,
+  columnName: string
   value: string
 }
 
@@ -160,12 +160,15 @@ export function process(
     if (config['additional-columns'].length > 0) {
       card.additionalColumns = []
 
-      let counter = 0;
+      let counter = 0
       while (counter < config['additional-columns'].length) {
         const columnValue = rptLib.getLastCommentField(card, config['additional-columns-data'][counter])
-        const columnWithValue: AdditionalColumns = { columnName: config['additional-columns'][counter], value: columnValue }
+        const columnWithValue: AdditionalColumns = {
+          columnName: config['additional-columns'][counter],
+          value: columnValue
+        }
         card.additionalColumns[counter] = columnWithValue
-        counter++;
+        counter++
       }
     }
 
