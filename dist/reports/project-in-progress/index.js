@@ -152,6 +152,7 @@ function process(config, issueList, drillIn) {
     const issues = issueList.getItems();
     const projData = rptLib.getProjectStageIssues(issues);
     const cards = projData[project_reports_lib_1.ProjectStages.InProgress];
+    console.log(`In progress has ${cards.length} cards`);
     if (!cards) {
         return progressData;
     }
@@ -159,6 +160,7 @@ function process(config, issueList, drillIn) {
     const cardsForType = progressData.cardType === '*'
         ? clone_1.default(cards)
         : clone_1.default(rptLib.filterByLabel(cards, progressData.cardType.toLowerCase()));
+    console.log(`Filtered ${progressData.cardType} to ${cardsForType.length} cards`);
     const previousMoment = moment_1.default()
         .day(config['status-day'])
         .subtract(config['previous-days-ago'], 'days')
@@ -166,6 +168,7 @@ function process(config, issueList, drillIn) {
         .hour(config['previous-hour-utc']);
     console.log(`Previous status moment: ${previousMoment}`);
     // add status to each card from the status label
+    console.log(`Adding status to each card`);
     cardsForType.map((card) => {
         console.log(`issue: ${card.html_url}`);
         const labels = card.labels.map(label => label.name);

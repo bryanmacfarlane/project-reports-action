@@ -7,8 +7,8 @@ import * as os from 'os'
 import * as path from 'path'
 import sanitize from 'sanitize-filename'
 import * as url from 'url'
-import {Crawler} from './crawler'
-import {GitHubClient} from './github'
+import { Crawler } from './crawler'
+import { GitHubClient } from './github'
 import {
   CrawlingConfig,
   CrawlingTarget,
@@ -20,7 +20,7 @@ import {
   ReportSnapshot,
   RuntimeModule
 } from './interfaces'
-import {IssueList, ProjectIssue} from './project-reports-lib'
+import { IssueList, ProjectIssue } from './project-reports-lib'
 import * as drillInRpt from './reports/drill-in'
 import * as util from './util'
 
@@ -128,8 +128,16 @@ export async function generate(token: string, configYaml: string): Promise<Repor
         continue
       }
 
-      const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped']
-      for (const phase of defaultStages) {
+      const validStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped']
+      console.log(`Valid Stages: ${validStages.join(' ')}`)
+      for (const mappedStage in target.columnMap) {
+        console.log(`validating ${mappedStage}`)
+        if (validStages.indexOf(mappedStage) === -1) {
+          throw new Error(`Invalid stage ${mappedStage}`)
+        }
+      }
+
+      for (const phase of validStages) {
         if (!target.columnMap[phase]) {
           target.columnMap[phase] = []
         }

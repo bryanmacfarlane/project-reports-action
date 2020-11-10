@@ -7207,8 +7207,15 @@ function generate(token, configYaml) {
                 if (!target.stages) {
                     continue;
                 }
-                const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
-                for (const phase of defaultStages) {
+                const validStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
+                console.log(`Valid Stages: ${validStages.join(' ')}`);
+                for (const mappedStage in target.columnMap) {
+                    console.log(`validating ${mappedStage}`);
+                    if (validStages.indexOf(mappedStage) === -1) {
+                        throw new Error(`Invalid stage ${mappedStage}`);
+                    }
+                }
+                for (const phase of validStages) {
                     if (!target.columnMap[phase]) {
                         target.columnMap[phase] = [];
                     }

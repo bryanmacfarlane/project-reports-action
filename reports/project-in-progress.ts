@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import {CrawlingTarget} from '../interfaces'
+import { CrawlingTarget } from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
+import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export {reportType}
+export { reportType }
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
@@ -93,6 +93,7 @@ export function process(
   const issues = issueList.getItems()
   const projData: ProjectStageIssues = rptLib.getProjectStageIssues(issues)
   const cards = projData[ProjectStages.InProgress]
+  console.log(`In progress has ${cards.length} cards`)
   if (!cards) {
     return progressData
   }
@@ -103,6 +104,8 @@ export function process(
       ? clone(cards)
       : clone(rptLib.filterByLabel(cards, progressData.cardType.toLowerCase()) as IssueCardEx[])
 
+  console.log(`Filtered ${progressData.cardType} to ${cardsForType.length} cards`)
+  
   const previousMoment = moment()
     .day(config['status-day'])
     .subtract(config['previous-days-ago'], 'days')
@@ -111,6 +114,7 @@ export function process(
   console.log(`Previous status moment: ${previousMoment}`)
 
   // add status to each card from the status label
+  console.log(`Adding status to each card`)
   cardsForType.map((card: IssueCardEx) => {
     console.log(`issue: ${card.html_url}`)
     const labels = card.labels.map(label => label.name)
