@@ -72,8 +72,11 @@ export function getStringFromLabel(card: ProjectIssue, re: RegExp): string {
 }
 
 export function cleanBody(body: string): string {
-  const cleanedBody = body.replace(/<\!--.*?-->/g, '')
-  return cleanedBody
+  if (body) {
+    const cleanedBody = body.replace(/<\!--.*?-->/g, '')
+    return cleanedBody
+  }
+  return body
 }
 
 //
@@ -208,7 +211,7 @@ export function extractUrlsFromChecklist(body: string): string[] {
 
 // Project issues keyed by the stage they are in
 export interface ProjectIssues {
-  stages: {[key: string]: ProjectIssue[]}
+  stages: { [key: string]: ProjectIssue[] }
 }
 
 export interface ProjectColumn {
@@ -227,7 +230,7 @@ export const ProjectStages = {
   Missing: 'Missing'
 }
 
-export type ProjectStageIssues = {[key: string]: ProjectIssue[]}
+export type ProjectStageIssues = { [key: string]: ProjectIssue[] }
 
 export function getProjectStageIssues(issues: ProjectIssue[]) {
   const projIssues = <ProjectStageIssues>{}
@@ -466,7 +469,7 @@ export class IssueList {
 
     // stages and labels
     const filteredEvents: IssueEvent[] = []
-    const labelMap: {[name: string]: IssueLabel} = {}
+    const labelMap: { [name: string]: IssueLabel } = {}
 
     if (issue.events) {
       for (const event of issue.events) {
