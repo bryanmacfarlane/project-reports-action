@@ -157,7 +157,7 @@ export function process(
       card.project_target_date = d
     }
 
-    if (config['additional-columns'].length > 0) {
+    if (config['additional-columns']) {
       card.additionalColumns = []
 
       let counter = 0
