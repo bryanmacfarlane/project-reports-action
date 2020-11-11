@@ -71,6 +71,11 @@ export function getStringFromLabel(card: ProjectIssue, re: RegExp): string {
   return str
 }
 
+export function cleanBody(body: string): string {
+  const cleanedBody = body.replace(/<\!--.*?-->/g, '')
+  return cleanedBody
+}
+
 //
 // Will read a value from a field in the form of a key: value
 //
@@ -95,18 +100,26 @@ export function readFieldFromBody(key: string, body: string): string {
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i]
 
-    if (headerMatch && line.trim().length > 0) {
-      // previous non empty line was the key as a heading
-      return line.trim()
-    }
+    if (headerMatch) {
+      // if next line is another header, break
 
-    line = line.trim()
-    const parts = line.split(':')
-    if (parts.length === 2 && wordsMatch(parts[0], key)) {
-      val = parts[1].trim()
-      break
-    } else if (wordsMatch(line, key)) {
-      headerMatch = true
+      if (line.trim().startsWith('###')) {
+        break
+      }
+
+      // previous non empty line was the key as a heading
+      if (line.trim().length > 0) {
+        val += line.trim()
+      }
+    } else {
+      line = line.trim()
+      const parts = line.split(':')
+      if (parts.length === 2 && wordsMatch(parts[0], key)) {
+        val = parts[1].trim()
+        break
+      } else if (wordsMatch(line, key)) {
+        headerMatch = true
+      }
     }
   }
 
@@ -123,7 +136,7 @@ export function getLastCommentField(issue: ProjectIssue, field: string): string 
     return ''
   }
 
-  val = readFieldFromBody(field, issue.body)
+  val = readFieldFromBody(field, cleanBody(issue.body))
   console.log(`des: ${val}`)
   for (let i = issue.comments.length - 1; i >= 0; i--) {
     const comment = issue.comments[i]
@@ -131,7 +144,7 @@ export function getLastCommentField(issue: ProjectIssue, field: string): string 
       break
     }
 
-    const commentValue = readFieldFromBody(field, comment.body)
+    const commentValue = readFieldFromBody(field, cleanBody(comment.body))
 
     if (commentValue) {
       val = commentValue

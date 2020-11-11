@@ -28,8 +28,8 @@ reports:
           last-updated-days-flag: 7.0
           last-updated-scheme: "LastCommentPattern"
           last-updated-scheme-data: ".*"
-          additional-columns: ['risk']
-          additional-columns-data: ['### Risks']
+          additional-columns: ['next plan', 'risk']
+          additional-columns-data: ['### Plan or deliverables for next week', '### Risks and Mitigations']
       - name: "project-done"
         config:
           report-on: 'Team: ARC'
