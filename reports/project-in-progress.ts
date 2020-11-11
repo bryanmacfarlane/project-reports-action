@@ -243,7 +243,7 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
     progressRow.inProgress = card.inProgressSince
 
-    if (card.additionalColumns.length > 0) {
+    if (card.additionalColumns) {
       let counter = 0
       while (counter < card.additionalColumns.length) {
         progressRow[card.additionalColumns[counter].columnName] = card.additionalColumns[counter].value
