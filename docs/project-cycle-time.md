@@ -27,6 +27,7 @@ reports:
 Filters by this label. Typically a card type like `Feature`.
 
 **Default**: `Feature`
+**any**: `*` is supported which represents all cards.
 
 ### limit
 

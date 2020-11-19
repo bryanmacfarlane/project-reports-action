@@ -128,8 +128,16 @@ export async function generate(token: string, configYaml: string): Promise<Repor
         continue
       }
 
-      const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped']
-      for (const phase of defaultStages) {
+      const validStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped']
+      console.log(`Valid Stages: ${validStages.join(' ')}`)
+      for (const mappedStage in target.columnMap) {
+        console.log(`validating ${mappedStage}`)
+        if (validStages.indexOf(mappedStage) === -1) {
+          throw new Error(`Invalid stage ${mappedStage}`)
+        }
+      }
+
+      for (const phase of validStages) {
         if (!target.columnMap[phase]) {
           target.columnMap[phase] = []
         }
@@ -139,7 +147,7 @@ export async function generate(token: string, configYaml: string): Promise<Repor
       target.columnMap['Proposed'].push('Proposed', 'New', 'Ready for Review', 'Ready for Triage', 'Not Started')
       target.columnMap['Accepted'].push('Accepted', 'Approved', 'Ready for Work', 'Up Next')
       target.columnMap['In-Progress'].push('In-Progress', 'In progress', 'InProgress', 'Active', 'Started')
-      target.columnMap['Done'].push('Done', 'Completed', 'Complete')
+      target.columnMap['Done'].push('Done', 'Completed', 'Complete', 'Closed')
 
       // Add some common mappings
       target.columnMap['Proposed'].push('Triage', 'Not Started')
