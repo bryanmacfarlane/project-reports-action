@@ -210,6 +210,21 @@ function getStatusEmoji(status: string) {
   return statusEmoji
 }
 
+// Collapsible
+function getCollapsibleContent(body: string, title: string) {
+  /*if (body) {
+    if (body.length > 20) {
+      return `<details><summary>${body.substr(0, 20)}...</summary>${body}</details>`
+    }
+  }
+  */
+  if (body) {
+    return `${body.substr(0, 20)}...[More](#${title.toLowerCase().replace(' ', '-')})`
+  }
+  return body
+  //return body
+}
+
 export function renderMarkdown(targets: CrawlingTarget[], processedData: any): string {
   console.log('> in-progress::renderMarkdown')
   const progressData = processedData as ProgressData
@@ -222,6 +237,7 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
   lines.push('  ')
 
   const rows: ProgressRow[] = []
+  let additionalData = {}
   for (const card of processedData.cards) {
     const progressRow = <ProgressRow>{}
 
@@ -246,7 +262,15 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
     if (card.additionalColumns) {
       let counter = 0
       while (counter < card.additionalColumns.length) {
-        progressRow[card.additionalColumns[counter].columnName] = card.additionalColumns[counter].value
+        progressRow[card.additionalColumns[counter].columnName] = getCollapsibleContent(card.additionalColumns[counter].value, card.additionalColumns[counter].columnName)
+
+        if (additionalData[card.additionalColumns[counter].columnName] && additionalData[card.additionalColumns[counter].columnName].length > 0) {
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        } else {
+          additionalData[card.additionalColumns[counter].columnName] = []
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        }
+
         counter++
       }
     }
@@ -263,6 +287,21 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
   lines.push(table)
   lines.push('  ')
+
+  if (additionalData) {
+    for (let key in additionalData) {
+      lines.push(`## ${key}`)
+      for (let item in additionalData[key]) {
+        if (additionalData[key][item]['data']) {
+          lines.push(`### ${additionalData[key][item]['workItem']}`)
+          lines.push('  ')
+          lines.push(`${additionalData[key][item]['data']}`)
+          lines.push('  ')
+        }
+      }
+      lines.push('  ')
+    }
+  }
 
   return lines.join(os.EOL)
 }
