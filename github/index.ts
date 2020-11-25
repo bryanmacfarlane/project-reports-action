@@ -1,7 +1,7 @@
-import { Octokit } from '@octokit/rest'
+import {Octokit} from '@octokit/rest'
 import * as url from 'url'
-import { ProjectData } from '../interfaces'
-import { IssueComment, IssueList, ProjectColumn, ProjectIssue } from '../project-reports-lib'
+import {ProjectData} from '../interfaces'
+import {IssueComment, IssueList, ProjectColumn, ProjectIssue} from '../project-reports-lib'
 import * as restCache from './octokit-rest-cache'
 
 function DateOrNull(date: string): Date {
