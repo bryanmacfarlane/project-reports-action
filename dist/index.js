@@ -301,7 +301,7 @@ class GitHubClient {
                 const projects = res.data;
                 count = projects.length;
                 for (const project of projects) {
-                    if (projectHtmlUrl.indexOf(project.html_url) > -1) {
+                    if (projectHtmlUrl.toLowerCase() === project.html_url.toLowerCase()) {
                         proj = {
                             id: project.id,
                             html_url: project.html_url,

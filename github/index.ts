@@ -1,7 +1,7 @@
-import {Octokit} from '@octokit/rest'
+import { Octokit } from '@octokit/rest'
 import * as url from 'url'
-import {ProjectData} from '../interfaces'
-import {IssueComment, IssueList, ProjectColumn, ProjectIssue} from '../project-reports-lib'
+import { ProjectData } from '../interfaces'
+import { IssueComment, IssueList, ProjectColumn, ProjectIssue } from '../project-reports-lib'
 import * as restCache from './octokit-rest-cache'
 
 function DateOrNull(date: string): Date {
@@ -84,7 +84,7 @@ export class GitHubClient {
       count = projects.length
 
       for (const project of projects) {
-        if (projectHtmlUrl.indexOf(project.html_url) > -1) {
+        if (projectHtmlUrl.toLowerCase() === project.html_url.toLowerCase()) {
           proj = <ProjectData>{
             id: project.id,
             html_url: project.html_url,
