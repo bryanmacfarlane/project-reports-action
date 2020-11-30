@@ -84,7 +84,7 @@ export class GitHubClient {
       count = projects.length
 
       for (const project of projects) {
-        if (projectHtmlUrl.indexOf(project.html_url) > -1) {
+        if (projectHtmlUrl.toLowerCase() === project.html_url.toLowerCase()) {
           proj = <ProjectData>{
             id: project.id,
             html_url: project.html_url,
