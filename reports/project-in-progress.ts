@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import {CrawlingTarget} from '../interfaces'
+import { CrawlingTarget } from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
+import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export {reportType}
+export { reportType }
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
@@ -222,6 +222,7 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
   lines.push('  ')
 
   const rows: ProgressRow[] = []
+  let additionalData = {}
   for (const card of processedData.cards) {
     const progressRow = <ProgressRow>{}
 
@@ -243,10 +244,16 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
     progressRow.inProgress = card.inProgressSince
 
-    if (card.additionalColumns.length > 0) {
+    if (card.additionalColumns) {
       let counter = 0
       while (counter < card.additionalColumns.length) {
-        progressRow[card.additionalColumns[counter].columnName] = card.additionalColumns[counter].value
+        if (additionalData[card.additionalColumns[counter].columnName] && additionalData[card.additionalColumns[counter].columnName].length > 0) {
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        } else {
+          additionalData[card.additionalColumns[counter].columnName] = []
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        }
+
         counter++
       }
     }
@@ -263,6 +270,21 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
   lines.push(table)
   lines.push('  ')
+
+  if (additionalData) {
+    for (let key in additionalData) {
+      lines.push(`## ${key}`)
+      for (let item in additionalData[key]) {
+        if (additionalData[key][item]['data']) {
+          lines.push(`### ${additionalData[key][item]['workItem']}`)
+          lines.push('  ')
+          lines.push(`${additionalData[key][item]['data']}`)
+          lines.push('  ')
+        }
+      }
+      lines.push('  ')
+    }
+  }
 
   return lines.join(os.EOL)
 }
