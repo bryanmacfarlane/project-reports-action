@@ -37,9 +37,15 @@ describe('report-lib', () => {
 
     // should not fuzzy match
     //                     are not in this <== all these "words"
-    expect(rptLib.fuzzyMatch('Into progress', 'In progress')).toBeFalsy
-    expect(rptLib.fuzzyMatch('In progress', 'Into progress')).toBeFalsy
-    expect(rptLib.fuzzyMatch('pre progress', 'In progress')).toBeFalsy
+    expect(rptLib.fuzzyMatch('Into progress', 'In progress')).toBeFalsy()
+    expect(rptLib.fuzzyMatch('In progress', 'Into progress')).toBeFalsy()
+    expect(rptLib.fuzzyMatch('pre progress', 'In progress')).toBeFalsy()
+
+    // no words should do a trimmed equality check
+    expect(rptLib.fuzzyMatch('???', '??? ')).toBeTruthy()
+
+    // if either is falsy, the match is falsy
+    expect(rptLib.fuzzyMatch('', '')).toBeFalsy()
   })
 
   it('finds cards by label', async () => {

@@ -15,9 +15,9 @@ reports:
       - name: "project-groupby-status"
         config:
           report-on-label: 'feature'
-          group-by-label-prefix': '> '
+          group-by-label-prefix: '> '
           target-date-comment-field: 'target date'
-          flag-in-progress-days': 21
+          flag-in-progress-days: 21
           limits:
             "Papercuts": 1
             "Reliability": 1

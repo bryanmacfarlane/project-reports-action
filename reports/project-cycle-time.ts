@@ -69,8 +69,14 @@ export function process(
   issueList: IssueList,
   drillIn: (identifier: string, title: string, cards: ProjectIssue[]) => void
 ): any {
+  console.log('> cycle-time::process')
   const cycleTimeData = <CycleTimeData>{}
-  const filtered = rptLib.filterByLabel(issueList.getItems(), config['report-on-label'])
+  const reportOn = config['report-on-label']
+  console.log(`Reporting on labels ${reportOn}`)
+  const items = issueList.getItems()
+  const filtered = reportOn === '*' ? clone(items) : clone(rptLib.filterByLabel(items, reportOn))
+  console.log(`Calculating cycle time for ${filtered.length} issues`)
+
   const issues = new IssueList(issue => issue.html_url)
   issues.add(filtered)
 

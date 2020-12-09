@@ -301,7 +301,7 @@ class GitHubClient {
                 const projects = res.data;
                 count = projects.length;
                 for (const project of projects) {
-                    if (projectHtmlUrl.indexOf(project.html_url) > -1) {
+                    if (projectHtmlUrl.toLowerCase() === project.html_url.toLowerCase()) {
                         proj = {
                             id: project.id,
                             html_url: project.html_url,
@@ -3264,10 +3264,19 @@ function wordsMatch(content, match) {
 }
 exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
-    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    if (!content || !match) {
+        return false;
+    }
+    if (content.toLocaleLowerCase().trim() === match.toLocaleLowerCase().trim()) {
+        return true;
+    }
+    let matchWords = match.match(/[a-zA-Z0-9]+/g) || [];
     matchWords = matchWords.map(item => item.toLowerCase());
-    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g) || [];
     contentWords = contentWords.map(item => item.toLowerCase());
+    if (matchWords.length === 0 || contentWords.length === 0) {
+        return false;
+    }
     let isMatch = true;
     for (const matchWord of matchWords) {
         if (contentWords.indexOf(matchWord) === -1) {
@@ -7198,8 +7207,15 @@ function generate(token, configYaml) {
                 if (!target.stages) {
                     continue;
                 }
-                const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
-                for (const phase of defaultStages) {
+                const validStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
+                console.log(`Valid Stages: ${validStages.join(' ')}`);
+                for (const mappedStage in target.columnMap) {
+                    console.log(`validating ${mappedStage}`);
+                    if (validStages.indexOf(mappedStage) === -1) {
+                        throw new Error(`Invalid stage ${mappedStage}`);
+                    }
+                }
+                for (const phase of validStages) {
                     if (!target.columnMap[phase]) {
                         target.columnMap[phase] = [];
                     }
@@ -7208,7 +7224,7 @@ function generate(token, configYaml) {
                 target.columnMap['Proposed'].push('Proposed', 'New', 'Ready for Review', 'Ready for Triage', 'Not Started');
                 target.columnMap['Accepted'].push('Accepted', 'Approved', 'Ready for Work', 'Up Next');
                 target.columnMap['In-Progress'].push('In-Progress', 'In progress', 'InProgress', 'Active', 'Started');
-                target.columnMap['Done'].push('Done', 'Completed', 'Complete');
+                target.columnMap['Done'].push('Done', 'Completed', 'Complete', 'Closed');
                 // Add some common mappings
                 target.columnMap['Proposed'].push('Triage', 'Not Started');
                 for (const mapName in target.columnMap) {

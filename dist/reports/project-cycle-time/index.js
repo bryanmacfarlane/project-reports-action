@@ -509,10 +509,19 @@ function wordsMatch(content, match) {
 }
 exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
-    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    if (!content || !match) {
+        return false;
+    }
+    if (content.toLocaleLowerCase().trim() === match.toLocaleLowerCase().trim()) {
+        return true;
+    }
+    let matchWords = match.match(/[a-zA-Z0-9]+/g) || [];
     matchWords = matchWords.map(item => item.toLowerCase());
-    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g) || [];
     contentWords = contentWords.map(item => item.toLowerCase());
+    if (matchWords.length === 0 || contentWords.length === 0) {
+        return false;
+    }
     let isMatch = true;
     for (const matchWord of matchWords) {
         if (contentWords.indexOf(matchWord) === -1) {
@@ -916,8 +925,13 @@ function percentileCycleTime(percentile, issues) {
     return ct;
 }
 function process(config, issueList, drillIn) {
+    console.log('> cycle-time::process');
     const cycleTimeData = {};
-    const filtered = rptLib.filterByLabel(issueList.getItems(), config['report-on-label']);
+    const reportOn = config['report-on-label'];
+    console.log(`Reporting on labels ${reportOn}`);
+    const items = issueList.getItems();
+    const filtered = reportOn === '*' ? clone_1.default(items) : clone_1.default(rptLib.filterByLabel(items, reportOn));
+    console.log(`Calculating cycle time for ${filtered.length} issues`);
     const issues = new project_reports_lib_1.IssueList(issue => issue.html_url);
     issues.add(filtered);
     const windowDays = config['window-days'];
