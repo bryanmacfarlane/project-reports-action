@@ -1,6 +1,6 @@
-import { IssueList, ProjectIssue } from '../project-reports-lib'
+import {IssueList, ProjectIssue} from '../project-reports-lib'
 import * as inProgress from '../reports/project-in-progress'
-import { IssueCardEx, ProgressData } from '../reports/project-in-progress'
+import {IssueCardEx, ProgressData} from '../reports/project-in-progress'
 import projectData from './project-data.test.json'
 
 const config: any = {

@@ -301,7 +301,7 @@ class GitHubClient {
                 const projects = res.data;
                 count = projects.length;
                 for (const project of projects) {
-                    if (projectHtmlUrl.indexOf(project.html_url) > -1) {
+                    if (projectHtmlUrl.toLowerCase() === project.html_url.toLowerCase()) {
                         proj = {
                             id: project.id,
                             html_url: project.html_url,
@@ -3116,7 +3116,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
+exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.cleanBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
 const clone_1 = __importDefault(__webpack_require__(97));
 const moment_1 = __importDefault(__webpack_require__(482));
 const os = __importStar(__webpack_require__(87));
@@ -3175,6 +3175,14 @@ function getStringFromLabel(card, re) {
     return str;
 }
 exports.getStringFromLabel = getStringFromLabel;
+function cleanBody(body) {
+    if (body) {
+        const cleanedBody = body.replace(/<\!--.*?-->/g, '');
+        return cleanedBody;
+    }
+    return body;
+}
+exports.cleanBody = cleanBody;
 //
 // Will read a value from a field in the form of a key: value
 //
@@ -3196,18 +3204,26 @@ function readFieldFromBody(key, body) {
     const lines = body.split(os.EOL);
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-        if (headerMatch && line.trim().length > 0) {
+        if (headerMatch) {
+            // if next line is another header, break
+            if (line.trim().startsWith('###')) {
+                break;
+            }
             // previous non empty line was the key as a heading
-            return line.trim();
+            if (line.trim().length > 0) {
+                val += line.trim();
+            }
         }
-        line = line.trim();
-        const parts = line.split(':');
-        if (parts.length === 2 && wordsMatch(parts[0], key)) {
-            val = parts[1].trim();
-            break;
-        }
-        else if (wordsMatch(line, key)) {
-            headerMatch = true;
+        else {
+            line = line.trim();
+            const parts = line.split(':');
+            if (parts.length === 2 && wordsMatch(parts[0], key)) {
+                val = parts[1].trim();
+                break;
+            }
+            else if (wordsMatch(line, key)) {
+                headerMatch = true;
+            }
         }
     }
     return val;
@@ -3221,14 +3237,14 @@ function getLastCommentField(issue, field) {
     if (!issue.comments) {
         return '';
     }
-    val = readFieldFromBody(field, issue.body);
+    val = readFieldFromBody(field, cleanBody(issue.body));
     console.log(`des: ${val}`);
     for (let i = issue.comments.length - 1; i >= 0; i--) {
         const comment = issue.comments[i];
         if (!comment) {
             break;
         }
-        const commentValue = readFieldFromBody(field, comment.body);
+        const commentValue = readFieldFromBody(field, cleanBody(comment.body));
         if (commentValue) {
             val = commentValue;
             break;
@@ -3264,10 +3280,19 @@ function wordsMatch(content, match) {
 }
 exports.wordsMatch = wordsMatch;
 function fuzzyMatch(content, match) {
-    let matchWords = match.match(/[a-zA-Z0-9]+/g);
+    if (!content || !match) {
+        return false;
+    }
+    if (content.toLocaleLowerCase().trim() === match.toLocaleLowerCase().trim()) {
+        return true;
+    }
+    let matchWords = match.match(/[a-zA-Z0-9]+/g) || [];
     matchWords = matchWords.map(item => item.toLowerCase());
-    let contentWords = content.match(/[a-zA-Z0-9]+/g);
+    let contentWords = content.match(/[a-zA-Z0-9]+/g) || [];
     contentWords = contentWords.map(item => item.toLowerCase());
+    if (matchWords.length === 0 || contentWords.length === 0) {
+        return false;
+    }
     let isMatch = true;
     for (const matchWord of matchWords) {
         if (contentWords.indexOf(matchWord) === -1) {
@@ -7198,8 +7223,15 @@ function generate(token, configYaml) {
                 if (!target.stages) {
                     continue;
                 }
-                const defaultStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
-                for (const phase of defaultStages) {
+                const validStages = ['Proposed', 'Accepted', 'Blocked', 'In-Progress', 'Done', 'Unmapped'];
+                console.log(`Valid Stages: ${validStages.join(' ')}`);
+                for (const mappedStage in target.columnMap) {
+                    console.log(`validating ${mappedStage}`);
+                    if (validStages.indexOf(mappedStage) === -1) {
+                        throw new Error(`Invalid stage ${mappedStage}`);
+                    }
+                }
+                for (const phase of validStages) {
                     if (!target.columnMap[phase]) {
                         target.columnMap[phase] = [];
                     }
@@ -7208,7 +7240,7 @@ function generate(token, configYaml) {
                 target.columnMap['Proposed'].push('Proposed', 'New', 'Ready for Review', 'Ready for Triage', 'Not Started');
                 target.columnMap['Accepted'].push('Accepted', 'Approved', 'Ready for Work', 'Up Next');
                 target.columnMap['In-Progress'].push('In-Progress', 'In progress', 'InProgress', 'Active', 'Started');
-                target.columnMap['Done'].push('Done', 'Completed', 'Complete');
+                target.columnMap['Done'].push('Done', 'Completed', 'Complete', 'Closed');
                 // Add some common mappings
                 target.columnMap['Proposed'].push('Triage', 'Not Started');
                 for (const mapName in target.columnMap) {
