@@ -718,6 +718,9 @@ function readFieldFromBody(key, body) {
             }
             // previous non empty line was the key as a heading
             if (line.trim().length > 0) {
+                if (val) {
+                    val += '\n';
+                }
                 val += line.trim();
             }
         }
@@ -732,6 +735,9 @@ function readFieldFromBody(key, body) {
                 headerMatch = true;
             }
         }
+    }
+    if (headerMatch && !val) {
+        val = 'NA';
     }
     return val;
 }

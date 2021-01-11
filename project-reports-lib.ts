@@ -112,6 +112,9 @@ export function readFieldFromBody(key: string, body: string): string {
 
       // previous non empty line was the key as a heading
       if (line.trim().length > 0) {
+        if (val) {
+          val += '\n'
+        }
         val += line.trim()
       }
     } else {
@@ -125,7 +128,9 @@ export function readFieldFromBody(key: string, body: string): string {
       }
     }
   }
-
+  if (headerMatch && !val) {
+    val = 'NA'
+  }
   return val
 }
 
