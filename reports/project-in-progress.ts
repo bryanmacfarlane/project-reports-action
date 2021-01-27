@@ -2,14 +2,14 @@ import clone from 'clone'
 import moment from 'moment'
 import * as os from 'os'
 import tablemark from 'tablemark'
-import {CrawlingTarget} from '../interfaces'
+import { CrawlingTarget } from '../interfaces'
 import * as rptLib from '../project-reports-lib'
-import {IssueList, ProjectIssue, ProjectStageIssues, ProjectStages} from '../project-reports-lib'
+import { IssueList, ProjectIssue, ProjectStageIssues, ProjectStages } from '../project-reports-lib'
 
 const now = moment()
 
 const reportType = 'project'
-export {reportType}
+export { reportType }
 
 /*
  * Gives visibility into whether the team has untriaged debt, an approval bottleneck and
@@ -31,7 +31,9 @@ export function getDefaultConfiguration(): any {
     // last status a week before this wednesday (last wednesday)
     'status-day': 'Wednesday',
     'previous-days-ago': 7,
-    'previous-hour-utc': 17
+    'previous-hour-utc': 17,
+    'additional-columns': [],
+    'additional-columns-data': []
   }
 }
 
@@ -48,6 +50,12 @@ export interface IssueCardEx extends ProjectIssue {
   lastUpdatedAgo: string
   hoursInProgress: number
   inProgressSince: string
+  additionalColumns: AdditionalColumns[]
+}
+
+export type AdditionalColumns = {
+  columnName: string
+  value: string
 }
 
 const statusLevels = {
@@ -148,6 +156,22 @@ export function process(
     if (d && !isNaN(d.valueOf())) {
       card.project_target_date = d
     }
+
+    if (config['additional-columns'].length > 0) {
+      card.additionalColumns = []
+
+      let counter = 0
+      while (counter < config['additional-columns'].length) {
+        const columnValue = rptLib.getLastCommentField(card, config['additional-columns-data'][counter])
+        const columnWithValue: AdditionalColumns = {
+          columnName: config['additional-columns'][counter],
+          value: columnValue
+        }
+        card.additionalColumns[counter] = columnWithValue
+        counter++
+      }
+    }
+
     return card
   })
 
@@ -165,6 +189,7 @@ interface ProgressRow {
   previous: string
   inProgress: string
   lastUpdated: string
+  [key: string]: string
 }
 
 // TODO: we could make this configurable
@@ -197,6 +222,7 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
   lines.push('  ')
 
   const rows: ProgressRow[] = []
+  let additionalData = {}
   for (const card of processedData.cards) {
     const progressRow = <ProgressRow>{}
 
@@ -218,6 +244,20 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
     progressRow.inProgress = card.inProgressSince
 
+    if (card.additionalColumns) {
+      let counter = 0
+      while (counter < card.additionalColumns.length) {
+        if (additionalData[card.additionalColumns[counter].columnName] && additionalData[card.additionalColumns[counter].columnName].length > 0) {
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        } else {
+          additionalData[card.additionalColumns[counter].columnName] = []
+          additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value })
+        }
+
+        counter++
+      }
+    }
+
     rows.push(progressRow)
   }
 
@@ -230,6 +270,21 @@ export function renderMarkdown(targets: CrawlingTarget[], processedData: any): s
 
   lines.push(table)
   lines.push('  ')
+
+  if (additionalData) {
+    for (let key in additionalData) {
+      lines.push(`## ${key}`)
+      for (let item in additionalData[key]) {
+        if (additionalData[key][item]['data']) {
+          lines.push(`### ${additionalData[key][item]['workItem']}`)
+          lines.push('  ')
+          lines.push(`${additionalData[key][item]['data']}`)
+          lines.push('  ')
+        }
+      }
+      lines.push('  ')
+    }
+  }
 
   return lines.join(os.EOL)
 }

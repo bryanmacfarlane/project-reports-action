@@ -109,7 +109,9 @@ function getDefaultConfiguration() {
         // last status a week before this wednesday (last wednesday)
         'status-day': 'Wednesday',
         'previous-days-ago': 7,
-        'previous-hour-utc': 17
+        'previous-hour-utc': 17,
+        'additional-columns': [],
+        'additional-columns-data': []
     };
 }
 exports.getDefaultConfiguration = getDefaultConfiguration;
@@ -195,6 +197,19 @@ function process(config, issueList, drillIn) {
         if (d && !isNaN(d.valueOf())) {
             card.project_target_date = d;
         }
+        if (config['additional-columns'].length > 0) {
+            card.additionalColumns = [];
+            let counter = 0;
+            while (counter < config['additional-columns'].length) {
+                const columnValue = rptLib.getLastCommentField(card, config['additional-columns-data'][counter]);
+                const columnWithValue = {
+                    columnName: config['additional-columns'][counter],
+                    value: columnValue
+                };
+                card.additionalColumns[counter] = columnWithValue;
+                counter++;
+            }
+        }
         return card;
     });
     cardsForType.sort(sortCards);
@@ -227,6 +242,7 @@ function renderMarkdown(targets, processedData) {
     lines.push(`<sub><sup>Sorted by status and then in progress time descending</sup></sub>  `);
     lines.push('  ');
     const rows = [];
+    let additionalData = {};
     for (const card of processedData.cards) {
         const progressRow = {};
         let assigned = card.assignee;
@@ -244,6 +260,19 @@ function renderMarkdown(targets, processedData) {
             progressRow.lastUpdated += ' :triangular_flag_on_post:';
         }
         progressRow.inProgress = card.inProgressSince;
+        if (card.additionalColumns) {
+            let counter = 0;
+            while (counter < card.additionalColumns.length) {
+                if (additionalData[card.additionalColumns[counter].columnName] && additionalData[card.additionalColumns[counter].columnName].length > 0) {
+                    additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value });
+                }
+                else {
+                    additionalData[card.additionalColumns[counter].columnName] = [];
+                    additionalData[card.additionalColumns[counter].columnName].push({ workItem: card.title, data: card.additionalColumns[counter].value });
+                }
+                counter++;
+            }
+        }
         rows.push(progressRow);
     }
     let table;
@@ -255,6 +284,20 @@ function renderMarkdown(targets, processedData) {
     }
     lines.push(table);
     lines.push('  ');
+    if (additionalData) {
+        for (let key in additionalData) {
+            lines.push(`## ${key}`);
+            for (let item in additionalData[key]) {
+                if (additionalData[key][item]['data']) {
+                    lines.push(`### ${additionalData[key][item]['workItem']}`);
+                    lines.push('  ');
+                    lines.push(`${additionalData[key][item]['data']}`);
+                    lines.push('  ');
+                }
+            }
+            lines.push('  ');
+        }
+    }
     return lines.join(os.EOL);
 }
 exports.renderMarkdown = renderMarkdown;
@@ -577,7 +620,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
+exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.cleanBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
 const clone_1 = __importDefault(__webpack_require__(97));
 const moment_1 = __importDefault(__webpack_require__(431));
 const os = __importStar(__webpack_require__(87));
@@ -636,6 +679,14 @@ function getStringFromLabel(card, re) {
     return str;
 }
 exports.getStringFromLabel = getStringFromLabel;
+function cleanBody(body) {
+    if (body) {
+        const cleanedBody = body.replace(/<\!--.*?-->/g, '');
+        return cleanedBody;
+    }
+    return body;
+}
+exports.cleanBody = cleanBody;
 //
 // Will read a value from a field in the form of a key: value
 //
@@ -657,19 +708,33 @@ function readFieldFromBody(key, body) {
     const lines = body.split(os.EOL);
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-        if (headerMatch && line.trim().length > 0) {
+        if (headerMatch) {
+            // if next line is another header, break
+            if (line.trim().startsWith('###')) {
+                break;
+            }
             // previous non empty line was the key as a heading
-            return line.trim();
+            if (line.trim().length > 0) {
+                if (val) {
+                    val += '\n';
+                }
+                val += line.trim();
+            }
         }
-        line = line.trim();
-        const parts = line.split(':');
-        if (parts.length === 2 && wordsMatch(parts[0], key)) {
-            val = parts[1].trim();
-            break;
+        else {
+            line = line.trim();
+            const parts = line.split(':');
+            if (parts.length === 2 && wordsMatch(parts[0], key)) {
+                val = parts[1].trim();
+                break;
+            }
+            else if (wordsMatch(line, key)) {
+                headerMatch = true;
+            }
         }
-        else if (wordsMatch(line, key)) {
-            headerMatch = true;
-        }
+    }
+    if (headerMatch && !val) {
+        val = 'NA';
     }
     return val;
 }
@@ -682,14 +747,14 @@ function getLastCommentField(issue, field) {
     if (!issue.comments) {
         return '';
     }
-    val = readFieldFromBody(field, issue.body);
+    val = readFieldFromBody(field, cleanBody(issue.body));
     console.log(`des: ${val}`);
     for (let i = issue.comments.length - 1; i >= 0; i--) {
         const comment = issue.comments[i];
         if (!comment) {
             break;
         }
-        const commentValue = readFieldFromBody(field, comment.body);
+        const commentValue = readFieldFromBody(field, cleanBody(comment.body));
         if (commentValue) {
             val = commentValue;
             break;

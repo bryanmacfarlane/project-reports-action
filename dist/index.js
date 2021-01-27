@@ -3116,7 +3116,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
+exports.IssueList = exports.getProjectStageIssues = exports.ProjectStages = exports.extractUrlsFromChecklist = exports.fuzzyMatch = exports.wordsMatch = exports.sumCardProperty = exports.getLastCommentDateField = exports.getLastCommentField = exports.readFieldFromBody = exports.cleanBody = exports.getStringFromLabel = exports.getCountFromLabel = exports.filterByLabel = exports.repoPropsFromUrl = void 0;
 const clone_1 = __importDefault(__webpack_require__(97));
 const moment_1 = __importDefault(__webpack_require__(482));
 const os = __importStar(__webpack_require__(87));
@@ -3175,6 +3175,14 @@ function getStringFromLabel(card, re) {
     return str;
 }
 exports.getStringFromLabel = getStringFromLabel;
+function cleanBody(body) {
+    if (body) {
+        const cleanedBody = body.replace(/<\!--.*?-->/g, '');
+        return cleanedBody;
+    }
+    return body;
+}
+exports.cleanBody = cleanBody;
 //
 // Will read a value from a field in the form of a key: value
 //
@@ -3196,19 +3204,33 @@ function readFieldFromBody(key, body) {
     const lines = body.split(os.EOL);
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-        if (headerMatch && line.trim().length > 0) {
+        if (headerMatch) {
+            // if next line is another header, break
+            if (line.trim().startsWith('###')) {
+                break;
+            }
             // previous non empty line was the key as a heading
-            return line.trim();
+            if (line.trim().length > 0) {
+                if (val) {
+                    val += '\n';
+                }
+                val += line.trim();
+            }
         }
-        line = line.trim();
-        const parts = line.split(':');
-        if (parts.length === 2 && wordsMatch(parts[0], key)) {
-            val = parts[1].trim();
-            break;
+        else {
+            line = line.trim();
+            const parts = line.split(':');
+            if (parts.length === 2 && wordsMatch(parts[0], key)) {
+                val = parts[1].trim();
+                break;
+            }
+            else if (wordsMatch(line, key)) {
+                headerMatch = true;
+            }
         }
-        else if (wordsMatch(line, key)) {
-            headerMatch = true;
-        }
+    }
+    if (headerMatch && !val) {
+        val = 'NA';
     }
     return val;
 }
@@ -3221,14 +3243,14 @@ function getLastCommentField(issue, field) {
     if (!issue.comments) {
         return '';
     }
-    val = readFieldFromBody(field, issue.body);
+    val = readFieldFromBody(field, cleanBody(issue.body));
     console.log(`des: ${val}`);
     for (let i = issue.comments.length - 1; i >= 0; i--) {
         const comment = issue.comments[i];
         if (!comment) {
             break;
         }
-        const commentValue = readFieldFromBody(field, comment.body);
+        const commentValue = readFieldFromBody(field, cleanBody(comment.body));
         if (commentValue) {
             val = commentValue;
             break;
